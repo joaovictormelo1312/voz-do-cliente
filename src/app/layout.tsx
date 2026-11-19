@@ -16,6 +16,19 @@ export const metadata: Metadata = {
   title: "Voz do Cliente | Pesquisas de satisfação",
   description:
     "Pesquisas de satisfação e análise da experiência do cliente.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Voz do Cliente",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
