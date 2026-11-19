@@ -1,0 +1,17 @@
+# Local agent tooling is not part of the application.
+/.agents/
+/skills-lock.json
+
+# Generated files and local dependencies.
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/coverage/
+*.tsbuildinfo
+**/__pycache__/
+
+# Keep local environment credentials out of version control.
+**/.env*
+!**/.env.example
+!**/.env.*.example
