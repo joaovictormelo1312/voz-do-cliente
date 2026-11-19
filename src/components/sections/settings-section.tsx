@@ -27,14 +27,14 @@ export function SettingsSection() {
 
       <form className="settings-layout" onSubmit={saveSettings}>
         <aside className="settings-nav panel">
-          <a className="settings-nav-item selected" href="#perfil"><UserRound size={16} /> Perfil</a>
-          <a className="settings-nav-item" href="#notificacoes"><Bell size={16} /> Notificações</a>
-          <a className="settings-nav-item" href="#privacidade"><LockKeyhole size={16} /> Privacidade</a>
+          <a className="settings-nav-item selected" href="#perfil"><UserRound size={16} className="text-indigo-500" /> Perfil</a>
+          <a className="settings-nav-item" href="#notificacoes"><Bell size={16} className="text-amber-500" /> Notificações</a>
+          <a className="settings-nav-item" href="#privacidade"><LockKeyhole size={16} className="text-emerald-500" /> Privacidade</a>
         </aside>
 
         <div className="settings-content">
           <article className="panel settings-card" id="perfil">
-            <div className="settings-card-heading"><span className="settings-heading-icon"><UserRound size={17} /></span><div><h2>Perfil</h2><p>Informações da pessoa administradora deste workspace.</p></div></div>
+            <div className="settings-card-heading"><span className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex-shrink-0 shadow-lg shadow-indigo-500/30"><UserRound size={17} /></span><div><h2>Perfil</h2><p>Informações da pessoa administradora deste workspace.</p></div></div>
             <div className="profile-edit">
               <span className="profile-avatar large">CA</span>
               <div><strong>Camila Andrade</strong><span>Administradora</span></div>
@@ -48,13 +48,13 @@ export function SettingsSection() {
           </article>
 
           <article className="panel settings-card" id="notificacoes">
-            <div className="settings-card-heading"><span className="settings-heading-icon yellow"><Bell size={17} /></span><div><h2>Notificações</h2><p>Escolha quais avisos quer receber.</p></div></div>
+            <div className="settings-card-heading"><span className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 text-white flex-shrink-0 shadow-lg shadow-amber-500/30"><Bell size={17} /></span><div><h2>Notificações</h2><p>Escolha quais avisos quer receber.</p></div></div>
             <ToggleRow title="Novas respostas" description="Receba um aviso quando uma pesquisa receber respostas." checked={newResponses} onChange={setNewResponses} />
             <ToggleRow title="Resumo semanal" description="Receba um resumo semanal dos principais indicadores." checked={weeklySummary} onChange={setWeeklySummary} />
           </article>
 
           <article className="panel settings-card" id="privacidade">
-            <div className="settings-card-heading"><span className="settings-heading-icon green"><LockKeyhole size={17} /></span><div><h2>Privacidade das pesquisas</h2><p>Preferências sugeridas para novas pesquisas.</p></div></div>
+            <div className="settings-card-heading"><span className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex-shrink-0 shadow-lg shadow-emerald-500/30"><LockKeyhole size={17} /></span><div><h2>Privacidade das pesquisas</h2><p>Preferências sugeridas para novas pesquisas.</p></div></div>
             <ToggleRow title="Pesquisas anônimas por padrão" description="Não solicitar nome ou e-mail dos respondentes ao criar uma pesquisa." checked={anonymousByDefault} onChange={setAnonymousByDefault} />
             <div className="privacy-note"><ShieldCheck size={16} /><span>O tratamento real dos dados deve ser definido e documentado conforme a finalidade do projeto e a LGPD.</span></div>
           </article>

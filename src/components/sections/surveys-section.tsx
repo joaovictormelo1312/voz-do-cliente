@@ -6,6 +6,10 @@ import {
   Plus,
   Search,
   X,
+  ListChecks,
+  CheckCircle2,
+  MessageSquare,
+  TrendingUp,
 } from "lucide-react";
 import {
   MockSurvey,
@@ -119,10 +123,10 @@ export function SurveysSection() {
       </div>
 
       <div className="section-stats">
-        <MiniStat label="Total de pesquisas" value={String(surveys.length).padStart(2, "0")} />
-        <MiniStat label="Ativas" value={String(mockActiveSurveys).padStart(2, "0")} />
-        <MiniStat label="Respostas recebidas" value={mockTotalResponses.toLocaleString("pt-BR")} />
-        <MiniStat label="Conclusão média" value={`${mockAverageCompletion}%`} />
+        <MiniStat label="Total de pesquisas" value={String(surveys.length).padStart(2, "0")} icon={<ListChecks size={18} />} color="indigo" />
+        <MiniStat label="Ativas" value={String(mockActiveSurveys).padStart(2, "0")} icon={<CheckCircle2 size={18} />} color="emerald" />
+        <MiniStat label="Respostas recebidas" value={mockTotalResponses.toLocaleString("pt-BR")} icon={<MessageSquare size={18} />} color="amber" />
+        <MiniStat label="Conclusão média" value={`${mockAverageCompletion}%`} icon={<TrendingUp size={18} />} color="cyan" />
       </div>
 
       <div className="panel section-panel">
@@ -241,8 +245,24 @@ export function SurveysSection() {
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
-  return <article className="mini-stat"><span>{label}</span><strong>{value}</strong></article>;
+function MiniStat({ label, value, icon, color = "gray" }: { label: string; value: string; icon?: React.ReactNode; color?: string }) {
+  const colorClasses: Record<string, string> = {
+    indigo: "text-indigo-500",
+    emerald: "text-emerald-500",
+    amber: "text-amber-500",
+    cyan: "text-cyan-500",
+    gray: "text-gray-500",
+  };
+  
+  return (
+    <article className="mini-stat">
+      {icon && <span className={`${colorClasses[color] || colorClasses.gray}`}>{icon}</span>}
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+      </div>
+    </article>
+  );
 }
 
 export function StatusPill({ status }: { status: SurveyStatus }) {

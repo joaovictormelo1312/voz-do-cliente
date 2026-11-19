@@ -125,7 +125,7 @@ export default function Home() {
             <article className="metric-card">
               <div className="metric-top">
                 <span className="metric-label">Total de respostas</span>
-                <span className="metric-icon purple"><MessageSquareText size={18} /></span>
+                <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30"><MessageSquareText size={18} /></span>
               </div>
               <div className="metric-value">{mockTotalResponses.toLocaleString("pt-BR")}</div>
               <div className="metric-foot">
@@ -136,7 +136,7 @@ export default function Home() {
             <article className="metric-card">
               <div className="metric-top">
                 <span className="metric-label">Satisfação média</span>
-                <span className="metric-icon yellow"><Sparkles size={18} /></span>
+                <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30"><Sparkles size={18} /></span>
               </div>
               <div className="metric-value">{mockAverageScore.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}<span className="metric-out-of">/5</span></div>
               <div className="metric-foot">
@@ -146,7 +146,7 @@ export default function Home() {
             <article className="metric-card">
               <div className="metric-top">
                 <span className="metric-label">Conclusão média</span>
-                <span className="metric-icon green"><UsersRound size={18} /></span>
+                <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"><UsersRound size={18} /></span>
               </div>
               <div className="metric-value">{mockAverageCompletion}<span className="metric-out-of">%</span></div>
               <div className="metric-foot">
@@ -156,7 +156,7 @@ export default function Home() {
             <article className="metric-card">
               <div className="metric-top">
                 <span className="metric-label">Pesquisas ativas</span>
-                <span className="metric-icon blue"><ClipboardList size={18} /></span>
+                <span className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30"><ClipboardList size={18} /></span>
               </div>
               <div className="metric-value">{String(mockActiveSurveys).padStart(2, "0")}</div>
               <div className="metric-foot">

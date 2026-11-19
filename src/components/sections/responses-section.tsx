@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronDown, Search, Star } from "lucide-react";
+import { ChevronDown, MessageSquare, Search, Star, TrendingUp, Award } from "lucide-react";
 import {
   mockAverageScore,
   mockPositiveRatingPercent,
@@ -44,9 +44,9 @@ export function ResponsesSection() {
       </div>
 
       <div className="section-stats response-stats">
-        <article className="mini-stat"><span>Total de respostas</span><strong>{mockTotalResponses.toLocaleString("pt-BR")}</strong><small className="trend positive">+{mockWeeklyGrowthPercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% na semana</small></article>
-        <article className="mini-stat"><span>Nota média</span><strong>{mockAverageScore.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 5</small></strong><small>Média das avaliações</small></article>
-        <article className="mini-stat"><span>Avaliações 4 e 5</span><strong>{mockPositiveRatingPercent}%</strong><small>Do total de avaliações</small></article>
+        <article className="mini-stat"><MessageSquare size={18} className="text-amber-500" /><div><span>Total de respostas</span><strong>{mockTotalResponses.toLocaleString("pt-BR")}</strong><small className="trend positive">+{mockWeeklyGrowthPercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% na semana</small></div></article>
+        <article className="mini-stat"><Star size={18} className="text-yellow-500" /><div><span>Nota média</span><strong>{mockAverageScore.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} <small>/ 5</small></strong><small>Média das avaliações</small></div></article>
+        <article className="mini-stat"><Award size={18} className="text-green-500" /><div><span>Avaliações 4 e 5</span><strong>{mockPositiveRatingPercent}%</strong><small>Do total de avaliações</small></div></article>
       </div>
 
       <div className="panel section-panel">
