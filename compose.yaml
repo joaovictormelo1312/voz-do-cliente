@@ -12,6 +12,9 @@ services:
       PORT: 3000
       HOSTNAME: 0.0.0.0
       DOCKER_DEV_POLL: "true"
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY}
+      SITE_URL: ${SITE_URL}
     volumes:
       - ./src:/app/src
       - ./public:/app/public

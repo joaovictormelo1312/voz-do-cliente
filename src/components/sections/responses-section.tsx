@@ -3,34 +3,24 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, MessageSquare, Search, Star, TrendingUp, Award } from "lucide-react";
 import {
+  filterResponses,
   mockAverageScore,
   mockPositiveRatingPercent,
   mockResponses,
   mockSurveys,
   mockTotalResponses,
   mockWeeklyGrowthPercent,
-  FeedbackSentiment,
+  ResponseSentimentFilter,
 } from "@/lib/mock-data";
-
-type SentimentFilter = "Todos" | FeedbackSentiment;
 
 export function ResponsesSection() {
   const [query, setQuery] = useState("");
-  const [sentiment, setSentiment] = useState<SentimentFilter>("Todos");
+  const [sentiment, setSentiment] = useState<ResponseSentimentFilter>("Todos");
   const [surveyId, setSurveyId] = useState("Todas");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filteredResponses = useMemo(
-    () =>
-      mockResponses.filter((response) => {
-        const surveyName = mockSurveys.find((survey) => survey.id === response.surveyId)?.name ?? "";
-        const matchesText = `${response.customer} ${response.comment} ${surveyName}`
-          .toLowerCase()
-          .includes(query.toLowerCase());
-        return matchesText
-          && (sentiment === "Todos" || response.sentiment === sentiment)
-          && (surveyId === "Todas" || response.surveyId === surveyId);
-      }),
+    () => filterResponses(mockResponses, mockSurveys, query, sentiment, surveyId),
     [query, sentiment, surveyId],
   );
   return (
@@ -52,7 +42,7 @@ export function ResponsesSection() {
       <div className="panel section-panel">
         <div className="section-toolbar response-toolbar">
           <div className="filter-tabs" role="group" aria-label="Filtrar por sentimento">
-            {(["Todos", "Positivo", "Neutro", "Negativo"] as SentimentFilter[]).map((item) => (
+            {(["Todos", "Positivo", "Neutro", "Negativo"] as ResponseSentimentFilter[]).map((item) => (
               <button aria-pressed={sentiment === item} className={`filter-tab${sentiment === item ? " selected" : ""}`} key={item} onClick={() => setSentiment(item)}>{item}</button>
             ))}
           </div>

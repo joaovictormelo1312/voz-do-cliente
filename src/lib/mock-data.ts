@@ -1,5 +1,7 @@
 export type SurveyStatus = "Ativa" | "Rascunho" | "Encerrada";
 export type FeedbackSentiment = "Positivo" | "Neutro" | "Negativo";
+export type SurveyStatusFilter = "Todas" | SurveyStatus;
+export type ResponseSentimentFilter = "Todos" | FeedbackSentiment;
 
 export type MockSurvey = {
   id: string;
@@ -135,6 +137,21 @@ export type MockResponse = {
   comment: string;
 };
 
+export function filterSurveys(
+  surveys: MockSurvey[],
+  query: string,
+  statusFilter: SurveyStatusFilter,
+): MockSurvey[] {
+  const normalizedQuery = query.toLowerCase();
+
+  return surveys.filter((survey) => {
+    const matchesQuery = `${survey.name} ${survey.category}`
+      .toLowerCase()
+      .includes(normalizedQuery);
+    return matchesQuery && (statusFilter === "Todas" || survey.status === statusFilter);
+  });
+}
+
 export const mockResponses: MockResponse[] = [
   {
     id: "resp-001",
@@ -217,6 +234,26 @@ export const mockResponses: MockResponse[] = [
     comment: "Tive um problema com o produto e ainda aguardo uma solução.",
   },
 ];
+
+export function filterResponses(
+  responses: MockResponse[],
+  surveys: MockSurvey[],
+  query: string,
+  sentimentFilter: ResponseSentimentFilter,
+  surveyIdFilter: string,
+): MockResponse[] {
+  const normalizedQuery = query.toLowerCase();
+
+  return responses.filter((response) => {
+    const surveyName = surveys.find((survey) => survey.id === response.surveyId)?.name ?? "";
+    const matchesText = `${response.customer} ${response.comment} ${surveyName}`
+      .toLowerCase()
+      .includes(normalizedQuery);
+    return matchesText
+      && (sentimentFilter === "Todos" || response.sentiment === sentimentFilter)
+      && (surveyIdFilter === "Todas" || response.surveyId === surveyIdFilter);
+  });
+}
 
 export const mockWeeklyResponses = [
   { day: "Ter", responses: 28, previous: 20 },

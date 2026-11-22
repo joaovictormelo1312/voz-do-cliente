@@ -12,20 +12,20 @@ import {
   TrendingUp,
 } from "lucide-react";
 import {
+  filterSurveys,
   MockSurvey,
   mockActiveSurveys,
   mockAverageCompletion,
   mockSurveys,
   mockTotalResponses,
+  SurveyStatusFilter,
   SurveyStatus,
 } from "@/lib/mock-data";
-
-type StatusFilter = "Todas" | SurveyStatus;
 
 export function SurveysSection() {
   const [surveys, setSurveys] = useState(mockSurveys);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("Todas");
+  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>("Todas");
   const [isCreating, setIsCreating] = useState(false);
   const [notice, setNotice] = useState("");
   const [formError, setFormError] = useState("");
@@ -43,13 +43,7 @@ export function SurveysSection() {
   }, [isCreating]);
 
   const filteredSurveys = useMemo(
-    () =>
-      surveys.filter((survey) => {
-        const matchesQuery = `${survey.name} ${survey.category}`
-          .toLowerCase()
-          .includes(query.toLowerCase());
-        return matchesQuery && (statusFilter === "Todas" || survey.status === statusFilter);
-      }),
+    () => filterSurveys(surveys, query, statusFilter),
     [query, statusFilter, surveys],
   );
 
@@ -132,7 +126,7 @@ export function SurveysSection() {
       <div className="panel section-panel">
         <div className="section-toolbar">
           <div className="filter-tabs" role="group" aria-label="Filtrar por status">
-            {(["Todas", "Ativa", "Rascunho", "Encerrada"] as StatusFilter[]).map((status) => (
+            {(["Todas", "Ativa", "Rascunho", "Encerrada"] as SurveyStatusFilter[]).map((status) => (
               <button
                 aria-pressed={statusFilter === status}
                 className={`filter-tab${statusFilter === status ? " selected" : ""}`}
