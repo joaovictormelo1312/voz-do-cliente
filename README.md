@@ -57,7 +57,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ### Visão geral
 
 <p align="center">
-  <img src="public/screenshots/visao-geral.png" alt="Tela de visão geral" width="900">
+  <img src="public/screenshots/visao-geral.png" alt="Tela de visão geral" width="1200">
 </p>
 
 *A visão geral apresenta indicadores e pesquisas cadastradas pela conta.*
@@ -65,7 +65,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ### Pesquisas
 
 <p align="center">
-  <img src="public/screenshots/pesquisas.png" alt="Tela de pesquisas" width="900">
+  <img src="public/screenshots/pesquisas.png" alt="Tela de pesquisas" width="1200">
 </p>
 
 *A tela de pesquisas permite criar, buscar e filtrar pesquisas, adicionar perguntas, ativar ou encerrar pesquisas e copiar o link público.*
@@ -73,7 +73,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ### Respostas
 
 <p align="center">
-  <img src="public/screenshots/respostas.png" alt="Tela de respostas" width="900">
+  <img src="public/screenshots/respostas.png" alt="Tela de respostas" width="1200">
 </p>
 
 *A tela de respostas apresenta as respostas anônimas, com busca e filtro por pesquisa.*
@@ -81,7 +81,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ### Relatórios
 
 <p align="center">
-  <img src="public/screenshots/relatorios.png" alt="Tela de relatórios" width="900">
+  <img src="public/screenshots/relatorios.png" alt="Tela de relatórios" width="1200">
 </p>
 
 *A tela de relatórios consolida indicadores e a distribuição das avaliações recebidas.*
@@ -89,7 +89,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 ### Configurações
 
 <p align="center">
-  <img src="public/screenshots/configuracoes.png" alt="Tela de configurações" width="900">
+  <img src="public/screenshots/configuracoes.png" alt="Tela de configurações" width="1200">
 </p>
 
 *A tela de configurações reúne perfil, senha, notificações e preferências de privacidade.*
@@ -138,6 +138,8 @@ docker compose -f compose.production.yaml down
 4. Execute `npm install` e `npm run dev`. Acesse `/cadastro` para criar uma conta; confirme o e-mail e abra o link no **mesmo navegador** que iniciou o cadastro. O mesmo requisito vale para a recuperação de senha, pois o fluxo usa PKCE.
 
 O painel exige sessão validada no servidor. Em Configurações é possível editar nome e organização e alterar a senha; o botão Sair encerra a sessão. O e-mail é somente leitura. Caso o Supabase exija reautenticação para alteração de senha, siga as políticas configuradas no projeto. Redirecionamentos inválidos ou expirados exigem nova solicitação.
+
+Novas pesquisas têm uma pergunta obrigatória de avaliação de 1 a 5 e uma pergunta de comentário opcional. O criador pode alterar os textos antes da primeira resposta; após isso, pode criar uma nova versão como rascunho separado, preservando as respostas anteriores. Pesquisas antigas mantêm seus tipos de pergunta. As notas entram na média e no percentual de notas 4 e 5; comentários não alteram esses indicadores. O relatório geral reúne todas as avaliações, inclusive as de versões e pesquisas diferentes.
 
 **Limitações:** a API usa o banco Supabase após a aplicação das migrações descritas abaixo. Perguntas e opções não podem ser alteradas após o primeiro envio. Não há papéis ou isolamento de organizações, e as preferências de notificações e privacidade são demonstrativas. O Turnstile verifica cada envio sem uma cota compartilhada por pesquisa, mas não garante ausência de bloqueios ou disponibilidade durante picos. A API limita cada corpo a 5.000.000 bytes. Configure proteção contra tráfego volumétrico e limites apropriados na hospedagem e no Supabase: leituras públicas, identificadores desconhecidos e requisições à aplicação não têm limite por IP. Consulte [a integração](SUPABASE_INTEGRATION.md).
 
