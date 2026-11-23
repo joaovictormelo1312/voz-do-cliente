@@ -230,7 +230,7 @@ src/app/pesquisa/[slug]/
 
 ```bash
 # 1. Ler rápido
-cat RESUMO_RÁPIDO.md
+cat docs/RESUMO_RÁPIDO.md
 
 # 2. Executar
 npm run dev
@@ -239,7 +239,7 @@ npm run dev
 curl http://localhost:3000/api/surveys
 
 # 4. Próximo passo
-cat SUPABASE_INTEGRATION.md
+cat docs/SUPABASE_INTEGRATION.md
 ```
 
 ---

@@ -29,7 +29,7 @@ export function ResponsesSection({ results }: { results: SurveyResult[] }) {
           })}
         </div>
       </article>)}
-      {filtered.length === 0 && <div className="empty-state"><strong>Nenhuma resposta encontrada</strong><span>As respostas recebidas aparecerão aqui.</span></div>}</div>
+      {filtered.length === 0 && <div className="empty-state"><strong>Nenhuma resposta encontrada</strong><span>{query || surveyId !== "all" ? "Tente outro termo ou filtro." : "As respostas recebidas aparecerão aqui."}</span></div>}</div>
       <div className="table-pagination">Exibindo {filtered.length} de {submissions.length} respostas</div>
     </div>
   </section>;

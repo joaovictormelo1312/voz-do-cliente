@@ -377,10 +377,10 @@ CREATE TABLE answers (
 npm run dev
 
 # 2. Leia
-cat RESUMO_RÁPIDO.md
+cat docs/RESUMO_RÁPIDO.md
 
 # 3. Integre
-cat SUPABASE_INTEGRATION.md
+cat docs/SUPABASE_INTEGRATION.md
 ```
 
 ---

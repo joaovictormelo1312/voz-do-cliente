@@ -9,6 +9,7 @@ export interface Survey {
   description: string;
   category: string;
   status: SurveyStatus;
+  standard_form: boolean;
   starts_at: string | null;
   ends_at: string | null;
   created_at: string;
@@ -56,6 +57,7 @@ export interface PublicSurvey {
   title: string;
   description: string;
   status: SurveyStatus;
+  standard_form: boolean;
   questions: Array<Omit<Question, "survey_id"> & { options: Array<Pick<QuestionOption, "id" | "label" | "position">> }>;
 }
 
@@ -80,8 +82,8 @@ export interface QuestionResult {
   text_responses?: string[];
 }
 
-export type CreateSurveyInput = Omit<Survey, "id" | "owner_id" | "slug" | "created_at">;
-export type UpdateSurveyInput = Partial<Omit<Survey, "id" | "owner_id" | "slug" | "created_at">>;
+export type CreateSurveyInput = Omit<Survey, "id" | "owner_id" | "slug" | "created_at" | "standard_form">;
+export type UpdateSurveyInput = Partial<Omit<Survey, "id" | "owner_id" | "slug" | "created_at" | "standard_form">>;
 
 export type CreateQuestionInput = Omit<Question, "id" | "survey_id">;
 export type UpdateQuestionInput = Partial<Omit<Question, "id" | "survey_id">>;

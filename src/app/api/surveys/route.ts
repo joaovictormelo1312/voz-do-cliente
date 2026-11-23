@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createSurveySchema, updateSurveySchema } from "@/lib/validation";
+import { createSurveySchema } from "@/lib/validation";
+import { ZodError } from "zod";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
 
-async function getAuthUser(request: NextRequest) {
+async function getAuthUser() {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -35,7 +36,7 @@ function successResponse<T>(data: T, status: number = 200) {
 // GET /api/surveys - List user surveys
 export async function GET(request: NextRequest) {
   try {
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -56,7 +57,7 @@ export async function GET(request: NextRequest) {
 // POST /api/surveys - Create new survey
 export async function POST(request: NextRequest) {
   try {
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -65,13 +66,12 @@ export async function POST(request: NextRequest) {
 
     const validated = createSurveySchema.parse(body);
 
-    const survey = await db.createSurvey(user.id, validated);
+    const survey = await db.createSurvey(validated);
 
     return successResponse(survey, 201);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating survey:", error);
-
-    if (error.name === "ZodError") {
+    if (error instanceof ZodError) {
       return errorResponse("VALIDATION_ERROR", "Invalid survey data", 400);
     }
 

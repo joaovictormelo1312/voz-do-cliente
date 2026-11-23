@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Bell, Check, LockKeyhole, Save, ShieldCheck, UserRound } from "lucide-react";
 import { updatePassword, updateProfile, type AuthState } from "@/app/auth/actions";
+import { Spinner } from "@/components/loading-indicators";
 
 export function SettingsSection({ name, email, organization }: { name: string; email: string; organization: string }) {
   const [profileState, profileAction, profilePending] = useActionState<AuthState, FormData>(updateProfile, {});
@@ -40,7 +41,7 @@ export function SettingsSection({ name, email, organization }: { name: string; e
             </div>
             {profileState.error && <p className="auth-error" role="alert">{profileState.error}</p>}
             {profileState.message && <p className="auth-success" role="status">{profileState.message}</p>}
-            <div className="settings-save-row"><button className="primary-button" disabled={profilePending} type="submit"><Save size={15} />{profilePending ? "Salvando..." : "Salvar perfil"}</button></div>
+            <div className="settings-save-row"><button className="primary-button" disabled={profilePending} type="submit">{profilePending ? <Spinner /> : <Save size={15} />}{profilePending ? "Salvando..." : "Salvar perfil"}</button></div>
           </form>
 
           <form action={passwordAction} className="panel settings-card" id="senha">
@@ -51,7 +52,7 @@ export function SettingsSection({ name, email, organization }: { name: string; e
             </div>
             {passwordState.error && <p className="auth-error" role="alert">{passwordState.error}</p>}
             {passwordState.message && <p className="auth-success" role="status">{passwordState.message}</p>}
-            <div className="settings-save-row"><button className="primary-button" disabled={passwordPending} type="submit"><Save size={15} />{passwordPending ? "Salvando..." : "Alterar senha"}</button></div>
+            <div className="settings-save-row"><button className="primary-button" disabled={passwordPending} type="submit">{passwordPending ? <Spinner /> : <Save size={15} />}{passwordPending ? "Salvando..." : "Alterar senha"}</button></div>
           </form>
 
           <form onSubmit={(event) => { event.preventDefault(); setSaved(true); window.setTimeout(() => setSaved(false), 3000); }}>

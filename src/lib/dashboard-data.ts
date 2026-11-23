@@ -1,5 +1,14 @@
 import type { ApiResponse, PaginatedResponse, Survey, SurveyResult } from "./types";
 
+export function createDashboardUpdateQueue() {
+  let tail = Promise.resolve();
+  return (work: () => Promise<void>) => {
+    const task = tail.then(work);
+    tail = task.catch(() => undefined);
+    return task;
+  };
+}
+
 export async function apiRequest<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...init, cache: "no-store" });
   let result: ApiResponse<T>;

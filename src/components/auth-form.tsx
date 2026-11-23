@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { MessageSquareText } from "lucide-react";
 import { login, requestPasswordReset, signUp, updatePassword, type AuthState } from "@/app/auth/actions";
 import { AUTH_UNAVAILABLE_MESSAGE } from "@/lib/auth-messages";
+import { Spinner } from "@/components/loading-indicators";
 
 type Mode = "login" | "cadastro" | "recuperar" | "redefinir";
 
@@ -48,7 +49,7 @@ export function AuthForm({ mode, linkError = false, configError = false }: { mod
           {(mode === "cadastro" || mode === "redefinir") && <label className="form-field">Confirmar senha<input name="confirmPassword" type="password" autoComplete="new-password" minLength={8} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required /></label>}
           {state.error && <p className="auth-error" role="alert">{state.error}</p>}
           {state.message && <p className="auth-success" role="status">{state.message}</p>}
-          <button className="primary-button auth-submit" disabled={pending} type="submit">{pending ? "Aguarde..." : config.button}</button>
+          <button className="primary-button auth-submit" disabled={pending} type="submit">{pending && <Spinner />}{pending ? "Aguarde..." : config.button}</button>
         </form>
         {mode === "login" ? (
           <div className="auth-links"><Link href="/recuperar-senha">Esqueci minha senha</Link><span>Ainda não tem conta? <Link href="/cadastro">Cadastre-se</Link></span></div>

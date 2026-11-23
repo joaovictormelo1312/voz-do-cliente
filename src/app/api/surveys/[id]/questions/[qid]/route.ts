@@ -72,6 +72,9 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating question:", error);
 
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão permite alterar apenas o texto das perguntas.", 409);
+    }
     if (db.isSurveyStructureLocked(error)) {
       return errorResponse("SURVEY_LOCKED", "Não é possível alterar perguntas após receber respostas.", 409);
     }
@@ -116,6 +119,9 @@ export async function DELETE(
     return successResponse({ id: params.qid });
   } catch (error) {
     console.error("Error deleting question:", error);
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão permite alterar apenas o texto das perguntas.", 409);
+    }
     if (db.isSurveyStructureLocked(error)) {
       return errorResponse("SURVEY_LOCKED", "Não é possível alterar perguntas após receber respostas.", 409);
     }

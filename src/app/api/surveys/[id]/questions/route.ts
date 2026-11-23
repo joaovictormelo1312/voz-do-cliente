@@ -94,6 +94,9 @@ export async function POST(
   } catch (error) {
     console.error("Error creating question:", error);
 
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão permite alterar apenas o texto das perguntas.", 409);
+    }
     if (db.isSurveyStructureLocked(error)) {
       return errorResponse("SURVEY_LOCKED", "Não é possível alterar perguntas após receber respostas.", 409);
     }

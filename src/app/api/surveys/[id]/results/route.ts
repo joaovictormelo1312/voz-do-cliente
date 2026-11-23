@@ -4,7 +4,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
 
-async function getAuthUser(request: NextRequest) {
+async function getAuthUser() {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -40,7 +40,7 @@ export async function GET(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }

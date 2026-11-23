@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { updateSurveySchema } from "@/lib/validation";
+import { ZodError } from "zod";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
 
-async function getAuthUser(request: NextRequest) {
+async function getAuthUser() {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -41,7 +42,7 @@ export async function GET(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -70,7 +71,7 @@ export async function PATCH(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -93,10 +94,13 @@ export async function PATCH(
     }
 
     return successResponse(updated);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating survey:", error);
 
-    if (error.name === "ZodError") {
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão está incompleto ou não pode ser alterado.", 409);
+    }
+    if (error instanceof ZodError) {
       return errorResponse("VALIDATION_ERROR", "Invalid survey data", 400);
     }
 
@@ -111,7 +115,7 @@ export async function DELETE(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }

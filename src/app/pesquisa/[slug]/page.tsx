@@ -1,10 +1,11 @@
 'use client';
 
 import React, { FormEvent, useRef, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { Check, ChevronRight, MessageSquareText } from 'lucide-react';
 import Link from 'next/link';
 import Script from 'next/script';
 import type { SubmitSurveyInput } from '@/lib/types';
+import { Spinner, SurveySkeleton } from '@/components/loading-indicators';
 
 declare global {
   interface Window {
@@ -12,6 +13,7 @@ declare global {
       render: (container: HTMLElement, options: {
         sitekey: string;
         action: string;
+        theme: 'dark';
         callback: (token: string) => void;
         'expired-callback': () => void;
         'error-callback': () => void;
@@ -37,6 +39,7 @@ interface SurveyData {
   title: string;
   description: string;
   status: string;
+  standard_form: boolean;
   turnstile_site_key: string | null;
   questions: Question[];
 }
@@ -90,6 +93,7 @@ export default function SurveyPage({
     const id = window.turnstile.render(container, {
       sitekey,
       action: 'survey_submit',
+      theme: 'dark',
       callback: (token) => setChallengeToken(token),
       'expired-callback': () => setChallengeToken(null),
       'error-callback': () => {
@@ -114,10 +118,10 @@ export default function SurveyPage({
         setError(`Por favor, responda a: ${question.title}`);
         return;
       }
-      if (!challengeToken) {
-        setError('Aguarde a verificação de segurança ou tente novamente.');
-        return;
-      }
+    }
+    if (!challengeToken) {
+      setError('Aguarde a verificação de segurança ou tente novamente.');
+      return;
     }
 
     setSubmitting(true);
@@ -173,137 +177,99 @@ export default function SurveyPage({
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-          <p className="text-gray-600">Carregando pesquisa...</p>
-        </div>
-      </div>
-    );
+    return <SurveySkeleton />;
   }
 
   if (!survey) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            Pesquisa não encontrada
-          </h1>
-          <p className="text-gray-600 mb-6">
+      <main className="survey-page survey-page-centered">
+        <div className="survey-message panel">
+          <h1>Pesquisa não encontrada</h1>
+          <p>
             {error || 'A pesquisa que você está procurando não existe ou não está mais disponível.'}
           </p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-          >
-            Voltar ao início
-          </Link>
+          <Link href="/" className="primary-button">Voltar ao início</Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <div className="mb-4">
-            <div className="inline-block rounded-full bg-green-100 p-3">
-              <svg
-                className="w-6 h-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Obrigado!
-          </h1>
-          <p className="text-gray-600 mb-6">
+      <main className="survey-page survey-page-centered">
+        <div className="survey-message panel">
+          <span className="survey-success-icon"><Check size={24} /></span>
+          <h1>Obrigado!</h1>
+          <p>
             Sua resposta foi registrada com sucesso. Seus comentários são
             muito importantes para nós.
           </p>
-          <Link
-            href="/"
-            className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
-          >
-            Voltar
-          </Link>
+          <Link href="/" className="primary-button">Voltar ao início</Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {survey.title}
-          </h1>
-          {survey.description && (
-            <p className="text-gray-600 text-lg mb-6">{survey.description}</p>
-          )}
-        </div>
+    <main className="survey-page">
+      <div className="survey-container">
+        <Link className="brand survey-brand" href="/" aria-label="Voz do Cliente">
+          <span className="brand-mark"><MessageSquareText size={20} /></span>
+          <span className="brand-name">voz<span>do</span>cliente</span>
+        </Link>
+        <header className="survey-header">
+          <p className="eyebrow">Sua opinião importa</p>
+          <h1>{survey.title}</h1>
+          <p>{survey.description || 'Conte para nós como foi sua experiência.'}</p>
+        </header>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700">{error}</p>
-          </div>
+          <p className="survey-error" role="alert">{error}</p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="survey-form">
           {survey.questions.map((question) => (
-            <div
-              key={question.id}
-              className="bg-white rounded-lg shadow-md p-6"
-            >
-              <label className="block text-lg font-semibold text-gray-900 mb-4">
+            <fieldset key={question.id} className="survey-question panel">
+              <legend className="sr-only">{question.title}</legend>
+              <p className="survey-question-title">
                 {question.title}
                 {question.required && (
-                  <span className="text-red-500 ml-1">*</span>
+                  <span className="survey-required" aria-label="obrigatória"> *</span>
                 )}
-              </label>
+              </p>
 
               {question.kind === 'rating' && (
-                <div className="flex gap-2">
+                <>
+                <p className="survey-hint">Selecione uma nota de 1 a 5.</p>
+                <div className="survey-rating" role="group" aria-label={question.title}>
                   {[1, 2, 3, 4, 5].map((rating) => (
                     <button
                       key={rating}
                       type="button"
+                      aria-label={`Nota ${rating} de 5`}
+                      aria-pressed={answers[question.id] === rating.toString()}
                       onClick={() =>
                         setAnswers({
                           ...answers,
                           [question.id]: rating.toString(),
                         })
                       }
-                      className={`w-12 h-12 rounded-lg font-semibold transition ${
-                        answers[question.id] === rating.toString()
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                      }`}
+                      className={`survey-rating-button${answers[question.id] === rating.toString() ? ' selected' : ''}`}
                     >
                       {rating}
                     </button>
                   ))}
                 </div>
+                {survey.standard_form && <div className="survey-scale"><span>1 · Pior</span><span>5 · Melhor</span></div>}
+                </>
               )}
 
               {question.kind === 'single_choice' && question.options && (
-                <div className="space-y-3">
+                <div className="survey-options">
                   {question.options.map((option) => (
                     <label
                       key={option.id}
-                      className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"
+                      className="survey-option"
                     >
                       <input
                         type="radio"
@@ -316,16 +282,16 @@ export default function SurveyPage({
                             [question.id]: e.target.value,
                           })
                         }
-                        className="w-4 h-4 text-indigo-600"
                       />
-                      <span className="text-gray-900">{option.label}</span>
+                      <span>{option.label}</span>
                     </label>
                   ))}
                 </div>
               )}
 
               {question.kind === 'text' && (
-                <textarea
+                <><p className="survey-hint">{question.required ? 'Compartilhe sua resposta.' : 'Opcional — conte mais sobre sua experiência.'}</p><textarea
+                  aria-label={question.title}
                   value={(answers[question.id] as string) || ''}
                   onChange={(e) =>
                     setAnswers({
@@ -334,11 +300,12 @@ export default function SurveyPage({
                     })
                   }
                   placeholder="Digite sua resposta aqui..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
+                  className="survey-textarea"
+                  maxLength={4000}
                   rows={4}
-                />
+                /></>
               )}
-            </div>
+            </fieldset>
           ))}
 
           <Script
@@ -348,18 +315,19 @@ export default function SurveyPage({
           />
           <div ref={challengeContainer} />
           {!survey.turnstile_site_key && (
-            <p className="text-red-700" role="alert">Verificação de segurança não configurada. Tente novamente mais tarde.</p>
+            <p className="survey-error" role="alert">Verificação de segurança não configurada. Tente novamente mais tarde.</p>
           )}
           <button
             type="submit"
             disabled={submitting}
-            className="w-full px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="primary-button survey-submit"
           >
+            {submitting && <Spinner />}
             {submitting ? 'Enviando...' : 'Enviar Resposta'}
-            {!submitting && <ChevronRight className="w-5 h-5" />}
+            {!submitting && <ChevronRight size={18} />}
           </button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

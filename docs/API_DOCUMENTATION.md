@@ -72,6 +72,8 @@ Create new survey
 
 **Authentication:** Required ✅
 
+Creates a standard form atomically: a required 1–5 rating and an optional text comment. Optional `rating_title` and `comment_title` customize the two question texts. Existing legacy surveys retain their original structure.
+
 **Body:**
 ```json
 {
@@ -79,6 +81,8 @@ Create new survey
   "description": "Help us improve our service",
   "category": "Support",
   "status": "draft",
+  "rating_title": "How do you rate our service?",
+  "comment_title": "What could we improve?",
   "starts_at": "2026-11-23T00:00:00Z",
   "ends_at": null
 }
@@ -96,6 +100,7 @@ Create new survey
     "description": "Help us improve our service",
     "category": "Support",
     "status": "draft",
+    "standard_form": true,
     "starts_at": "2026-11-23T00:00:00Z",
     "ends_at": null,
     "created_at": "2026-11-22T21:50:00Z"
@@ -235,6 +240,8 @@ List all questions for a survey
 #### POST /surveys/[id]/questions
 Create new question
 
+Only legacy surveys allow new questions. Standard surveys have a fixed structure.
+
 **Authentication:** Required ✅
 
 **Body:**
@@ -260,13 +267,14 @@ Create new question
 #### PATCH /surveys/[id]/questions/[qid]
 Update question
 
+For standard surveys, only the question title may be changed before the first response.
+
 **Authentication:** Required ✅
 
 **Body:**
 ```json
 {
-  "title": "Updated question title",
-  "required": false
+  "title": "Updated question title"
 }
 ```
 
@@ -276,6 +284,8 @@ Update question
 
 #### DELETE /surveys/[id]/questions/[qid]
 Delete question and all answers
+
+Not allowed for standard surveys. Any survey with responses also has a locked structure.
 
 **Authentication:** Required ✅
 
@@ -550,12 +560,9 @@ SURVEY_ID=$(curl -X POST \
   -d '{"title":"Feedback","category":"Support"}' \
   http://localhost:3000/api/surveys | jq -r '.data.id')
 
-# 2. Add question
-QUESTION_ID=$(curl -X POST \
-  -b cookies.txt \
-  -H "Content-Type: application/json" \
-  -d '{"title":"How satisfied?","kind":"rating","required":true,"position":0}' \
-  http://localhost:3000/api/surveys/$SURVEY_ID/questions | jq -r '.data.id')
+# 2. Find the automatically created rating question
+QUESTION_ID=$(curl -b cookies.txt \
+  http://localhost:3000/api/surveys/$SURVEY_ID/questions | jq -r '.data[] | select(.kind == "rating") | .id')
 
 # 3. Activate survey
 curl -X PATCH \

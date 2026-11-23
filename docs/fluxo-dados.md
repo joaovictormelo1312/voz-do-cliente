@@ -51,7 +51,7 @@ flowchart TD
 
 ### 3.1 Origem e processamento
 
-- Os conjuntos de pesquisas, respostas individuais de exemplo, série semanal e distribuição de notas estão em [mock-data.ts](./sistema-web/src/lib/mock-data.ts). São dados definidos no código, não obtidos de clientes nem de um banco.
+- Os conjuntos de pesquisas, respostas individuais de exemplo, série semanal e distribuição de notas estão em [mock-data.ts](../src/lib/mock-data.ts). São dados definidos no código, não obtidos de clientes nem de um banco.
 - A visão geral, as respostas e os relatórios usam agregados e listas desses conjuntos. Os gráficos são renderizados na interface com Recharts.
 - A busca e os filtros de pesquisas e respostas são executados localmente no navegador e alteram somente o que é exibido; não modificam os dados de origem. O sentimento já vem atribuído a cada resposta fictícia: não existe análise automática de texto.
 - A seção de relatórios apresenta uma série rotulada como últimos sete dias, porém os valores são fixos, não uma consulta por datas reais. Outros indicadores nela exibidos são agregados gerais; não se deve pressupor que todos pertencem ao período do gráfico.

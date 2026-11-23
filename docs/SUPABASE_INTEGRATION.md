@@ -23,6 +23,14 @@ A API usa o cliente Supabase no servidor com a sessão do usuário e as polític
 
 As migrações em `supabase/migrations/` precisam estar aplicadas **antes** de usar a API. Os dados armazenados anteriormente em memória não são migrados e não persistem após reinicialização.
 
+## Atualização automática do painel
+
+A migração `20261123010000_realtime_submissions.sql` adiciona `public.submissions` à publicação `supabase_realtime`. O servidor assina eventos de inserção apenas para as pesquisas da conta autenticada, respeitando a RLS, e encaminha ao navegador apenas o identificador da pesquisa. O token de sessão permanece no servidor.
+
+Com a aba visível, avisos próximos são agrupados e o painel consulta os resultados das pesquisas afetadas. Ao reconectar ou voltar à aba, sincroniza o painel; com a aba oculta, encerra a conexão. Se o canal ou uma consulta falhar, avisa o usuário, tenta sincronizar e reconecta após até um minuto. A atualização manual continua disponível.
+
+A hospedagem e o proxy precisam permitir respostas HTTP em streaming e conexões com Supabase Realtime. Limites de duração ou buffering podem causar reconexões e devem ser testados no ambiente publicado. Cada painel visível mantém uma conexão com a aplicação e um canal no Supabase, com um filtro por pesquisa; monitore conexões, eventos e o custo de carregar resultados em contas com muitas pesquisas ou respostas. O mecanismo reduz consultas desnecessárias, mas não garante ausência de sobrecarga.
+
 ## Proteção dos envios
 
 Crie um widget [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/get-started/) em modo **Managed**, registre o domínio da aplicação e configure suas chaves no ambiente. `TURNSTILE_SITE_KEY` é pública e enviada ao navegador; a chave secreta só fica no servidor. `SITE_URL` precisa corresponder ao domínio registrado e ao hostname retornado pela verificação. Configure também a política de privacidade e, se houver CSP, permita os domínios exigidos pelo Turnstile.
@@ -34,6 +42,7 @@ Cada envio exige token, validado pelo servidor via Siteverify com hostname e aç
 ## Limitações
 
 - Perguntas e opções ficam bloqueadas após a pesquisa receber respostas.
+- Novas pesquisas usam um formulário padrão com nota obrigatória de 1 a 5 e comentário opcional; somente os textos podem ser alterados antes da primeira resposta. Nova versão cria pesquisa separada, sem respostas copiadas. Pesquisas anteriores mantêm sua estrutura.
 - O Turnstile reduz automação, mas pode apresentar desafio, falhar ou bloquear visitantes legítimos; ele não garante disponibilidade em picos nem impede toda automação.
 - A API limita envios a 5.000.000 bytes e 200 respostas. Leituras públicas e requisições à aplicação não possuem limite por IP; configure WAF, proxy reverso e controle de tráfego adequado na hospedagem e proteja também o acesso direto ao Supabase. O limite de corpo da API não se aplica a chamadas diretas ao Supabase.
 - A taxa de conclusão não é calculada, pois o sistema não registra acessos ou abandonos.

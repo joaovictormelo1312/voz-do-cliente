@@ -73,6 +73,9 @@ export async function POST(
   } catch (error) {
     console.error("Error creating option:", error);
 
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão não permite opções de escolha.", 409);
+    }
     if (db.isSurveyStructureLocked(error)) {
       return errorResponse("SURVEY_LOCKED", "Não é possível alterar opções após receber respostas.", 409);
     }

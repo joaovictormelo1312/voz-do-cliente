@@ -13,6 +13,8 @@ export const createSurveySchema = z.object({
   status: surveyStatusSchema,
   starts_at: z.string().datetime().nullable().optional().default(null),
   ends_at: z.string().datetime().nullable().optional().default(null),
+  rating_title: z.string().trim().min(1).max(1000).default("Como você avalia nosso atendimento?"),
+  comment_title: z.string().trim().min(1).max(1000).default("O que podemos melhorar?"),
 }).refine(
   (data) => !data.starts_at || !data.ends_at || new Date(data.ends_at) > new Date(data.starts_at),
   { message: "End time must be after start time", path: ["ends_at"] }

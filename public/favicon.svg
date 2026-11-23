@@ -1,38 +1,5 @@
-<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle with gradient -->
-  <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#00D9D9;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="micGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0066FF;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#00D9D9;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  
-  <!-- Outer circle background -->
-  <circle cx="128" cy="128" r="120" fill="url(#bgGradient)" opacity="0.15"/>
-  
-  <!-- Speech bubble outline -->
-  <path d="M 50 70 Q 50 50 70 50 L 186 50 Q 206 50 206 70 L 206 140 Q 206 160 186 160 L 100 160 L 70 190 L 85 160 L 70 160 Q 50 160 50 140 Z" 
-        fill="none" stroke="url(#bgGradient)" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-  
-  <!-- Microphone icon inside -->
-  <g transform="translate(128, 95)">
-    <!-- Microphone capsule -->
-    <ellipse cx="0" cy="0" rx="20" ry="28" fill="url(#micGradient)"/>
-    
-    <!-- Sound wave bars - left -->
-    <rect x="-38" y="-8" width="6" height="16" rx="3" fill="url(#micGradient)" opacity="0.8"/>
-    <rect x="-28" y="-14" width="6" height="28" rx="3" fill="url(#micGradient)" opacity="0.9"/>
-    
-    <!-- Sound wave bars - right -->
-    <rect x="32" y="-8" width="6" height="16" rx="3" fill="url(#micGradient)" opacity="0.8"/>
-    <rect x="22" y="-14" width="6" height="28" rx="3" fill="url(#micGradient)" opacity="0.9"/>
-    
-    <!-- Microphone stand -->
-    <rect x="-4" y="28" width="8" height="12" rx="2" fill="url(#micGradient)"/>
-    <ellipse cx="0" cy="42" rx="12" ry="6" fill="url(#micGradient)"/>
-  </g>
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" fill="#e2ff2e"/>
+  <path d="M7 7h18v14H13l-6 4V7Z" fill="none" stroke="#0b0d12" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M11 12h10M11 16h7" fill="none" stroke="#0b0d12" stroke-width="2" stroke-linecap="round"/>
 </svg>

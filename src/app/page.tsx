@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import Dashboard from "@/components/dashboard";
+import { DashboardSkeleton } from "@/components/loading-indicators";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -29,5 +30,5 @@ async function AuthenticatedDashboard() {
 }
 
 export default function Home() {
-  return <Suspense fallback={<main className="auth-loading">Carregando...</main>}><AuthenticatedDashboard /></Suspense>;
+  return <Suspense fallback={<main className="dashboard-loading-shell"><DashboardSkeleton /></main>}><AuthenticatedDashboard /></Suspense>;
 }

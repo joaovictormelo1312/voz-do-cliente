@@ -22,6 +22,11 @@ export function isSurveyStructureLocked(error: unknown): boolean {
     && "message" in error && error.message === "SURVEY_HAS_RESPONSES";
 }
 
+export function isStandardFormLocked(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "P0001"
+    && "message" in error && (error.message === "STANDARD_FORM_LOCKED" || error.message === "STANDARD_FORM_INCOMPLETE");
+}
+
 function check<T>(result: { data: T; error: QueryError | null }): T {
   if (result.error) throw result.error;
   return result.data;
@@ -45,9 +50,13 @@ async function allRows<T>(
   }
 }
 
-export async function createSurvey(owner_id: string, input: CreateSurveyInput): Promise<Survey> {
+export async function createSurvey(input: CreateSurveyInput & { rating_title: string; comment_title: string }): Promise<Survey> {
   const supabase = await createSupabaseServerClient();
-  return required(check(await supabase.from("surveys").insert({ ...input, owner_id }).select().returns<Survey[]>().single()));
+  return required(check(await supabase.rpc("create_standard_survey", {
+    p_title: input.title, p_description: input.description, p_category: input.category,
+    p_status: input.status, p_starts_at: input.starts_at, p_ends_at: input.ends_at,
+    p_rating_title: input.rating_title, p_comment_title: input.comment_title,
+  }).returns<Survey[]>().single()));
 }
 
 export async function getSurvey(id: string): Promise<Survey | null> {
@@ -60,7 +69,7 @@ export async function getPublicSurvey(slug: string): Promise<PublicSurvey | null
   const data: unknown = check(await supabase.rpc("get_public_survey", { p_slug: slug }));
   const surveySchema = z.object({
     id: z.uuid(), slug: z.uuid(), title: z.string(), description: z.string(),
-    status: z.enum(["draft", "active", "closed"]),
+    status: z.enum(["draft", "active", "closed"]), standard_form: z.boolean().default(false),
     questions: z.array(z.object({
       id: z.uuid(), title: z.string(), kind: z.enum(["rating", "single_choice", "text"]),
       required: z.boolean(), position: z.number(),

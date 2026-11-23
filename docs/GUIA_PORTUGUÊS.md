@@ -14,10 +14,10 @@ npm run dev
 curl http://localhost:3000/api/surveys
 
 # 3. Leia a documentação
-cat RESUMO_RÁPIDO.md
+cat docs/RESUMO_RÁPIDO.md
 
 # 4. Integre ao Supabase (1 hora)
-cat SUPABASE_INTEGRATION.md
+cat docs/SUPABASE_INTEGRATION.md
 ```
 
 ---
@@ -50,14 +50,14 @@ npm run dev
 ### PASSO 2️⃣: Entender
 ```bash
 # Escolha 1 arquivo:
-cat RESUMO_RÁPIDO.md        # 2 min
-cat EXECUTIVO.md             # 5 min
-cat ÍNDICE.md                # 5 min
+cat docs/RESUMO_RÁPIDO.md    # 2 min
+cat docs/EXECUTIVO.md         # 5 min
+cat docs/ÍNDICE.md            # 5 min
 ```
 
 ### PASSO 3️⃣: Conectar ao Supabase
 ```bash
-cat SUPABASE_INTEGRATION.md
+cat docs/SUPABASE_INTEGRATION.md
 # Seguir passo-a-passo (1 hora)
 ```
 

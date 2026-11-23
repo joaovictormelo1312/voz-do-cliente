@@ -77,6 +77,9 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating option:", error);
 
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão não permite opções de escolha.", 409);
+    }
     if (db.isSurveyStructureLocked(error)) {
       return errorResponse("SURVEY_LOCKED", "Não é possível alterar opções após receber respostas.", 409);
     }
@@ -121,6 +124,9 @@ export async function DELETE(
     return successResponse({ id: params.oid });
   } catch (error) {
     console.error("Error deleting option:", error);
+    if (db.isStandardFormLocked(error)) {
+      return errorResponse("STANDARD_FORM_LOCKED", "O formulário padrão não permite opções de escolha.", 409);
+    }
     if (db.isSurveyStructureLocked(error)) {
       return errorResponse("SURVEY_LOCKED", "Não é possível alterar opções após receber respostas.", 409);
     }

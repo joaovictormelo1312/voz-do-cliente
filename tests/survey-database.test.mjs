@@ -142,6 +142,43 @@ test("migrações garantem isolamento, envio público atômico e proteção das 
     await db.query("select set_config('request.jwt.claim.sub', $1, false)", [owner]);
     await db.query("delete from public.surveys where id = $1", [survey.id]);
     assert.equal((await db.query("select * from public.answers")).rows.length, 0);
+
+    await db.exec("reset role");
+    await db.exec(await readFile(new URL("../supabase/migrations/20261123000000_standard_survey_form.sql", import.meta.url), "utf8"));
+    await db.exec("set role authenticated");
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [owner]);
+    const createStandard = "select * from public.create_standard_survey($1, '', 'Teste', 'draft', null, null, $2, $3)";
+    await assert.rejects(db.query(createStandard, ["Inválida", "Nota", ""]), /check constraint/);
+    assert.equal((await db.query("select count(*)::int as count from public.surveys where title = 'Inválida'")).rows[0].count, 0);
+    const standard = (await db.query(createStandard, ["Pesquisa padrão", "Qual sua nota?", "Como melhorar?"])).rows[0];
+    assert.equal(standard.standard_form, true);
+    const questions = (await db.query("select * from public.questions where survey_id = $1 order by position", [standard.id])).rows;
+    assert.deepEqual(questions.map((q) => [q.kind, q.required]), [["rating", true], ["text", false]]);
+    await db.query("update public.questions set title = 'Como avalia?' where id = $1", [questions[0].id]);
+    await assert.rejects(db.query("update public.questions set kind = 'text' where id = $1", [questions[0].id]), /STANDARD_FORM_LOCKED/);
+    await assert.rejects(db.query("delete from public.questions where id = $1", [questions[0].id]), /STANDARD_FORM_LOCKED/);
+    await assert.rejects(db.query("insert into public.questions (survey_id, title, kind, required, position) values ($1, 'Extra', 'text', false, 2)", [standard.id]), /STANDARD_FORM_LOCKED/);
+    await assert.rejects(db.query("insert into public.question_options (question_id, label, position) values ($1, 'Extra', 0)", [questions[0].id]), /STANDARD_FORM_LOCKED/);
+    await assert.rejects(db.query("update public.surveys set standard_form = false where id = $1", [standard.id]), /STANDARD_FORM_LOCKED/);
+    const incomplete = (await db.query("insert into public.surveys (owner_id, title, standard_form) values ($1, 'Incompleta', true) returning id", [owner])).rows[0];
+    await assert.rejects(db.query("update public.surveys set status = 'active' where id = $1", [incomplete.id]), /STANDARD_FORM_INCOMPLETE/);
+    await db.query("delete from public.surveys where id = $1", [incomplete.id]);
+    await db.query("update public.surveys set status = 'active' where id = $1", [standard.id]);
+    await db.exec("reset role; set role anon");
+    assert.equal((await db.query("select public.get_public_survey($1) as result", [standard.slug])).rows[0].result.survey.standard_form, true);
+    await db.exec("reset role; set role service_role");
+    const commentOnly = JSON.stringify([{ question_id: questions[1].id, text_value: "Comentário" }]);
+    assert.equal((await db.query("select public.submit_verified_survey($1, $2::jsonb, $3) as result", [standard.id, commentOnly, "e".repeat(64)])).rows[0].result.error, "INVALID_ANSWERS");
+    const ratingOnly = JSON.stringify([{ question_id: questions[0].id, rating: 5 }]);
+    assert.ok((await db.query("select public.submit_verified_survey($1, $2::jsonb, $3) as result", [standard.id, ratingOnly, "f".repeat(64)])).rows[0].result.submission_id);
+    await db.exec("reset role; set role authenticated");
+    await db.query("select set_config('request.jwt.claim.sub', $1, false)", [owner]);
+    await assert.rejects(db.query("update public.questions set title = 'Alterada' where id = $1", [questions[0].id]), /SURVEY_HAS_RESPONSES/);
+    const version = (await db.query(createStandard, ["Pesquisa padrão - nova versão", "Como avalia?", "Como melhorar?"])).rows[0];
+    assert.notEqual(version.id, standard.id);
+    assert.equal((await db.query("select count(*)::int as count from public.submissions where survey_id = $1", [standard.id])).rows[0].count, 1);
+    assert.equal((await db.query("select count(*)::int as count from public.submissions where survey_id = $1", [version.id])).rows[0].count, 0);
+    await db.query("delete from public.surveys where id in ($1, $2)", [standard.id, version.id]);
   } finally {
     await db.close();
   }
