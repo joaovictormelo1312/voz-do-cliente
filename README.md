@@ -41,7 +41,7 @@ Não compartilhe `.env.local` nem as chaves secretas. A chave secreta do Supabas
 
 ## Telas da aplicação
 
-As capturas abaixo mostram uma versão anterior do visual; a interface atual usa o tema escuro com detalhes em verde-limão.
+As capturas refletem a interface atual, com tema escuro e detalhes em verde-limão. As telas autenticadas e o formulário público usam dados fictícios de demonstração.
 
 ### Login
 
@@ -143,6 +143,14 @@ A atualização automática exige a migração de publicação do Realtime e uma
 A API de resultados também fornece, para cada pergunta numérica de uma pesquisa, sua média e distribuição de notas; para perguntas antigas de escolha única, fornece a contagem por opção. Esses detalhes por pergunta não são apresentados como indicadores individuais nas telas atuais. A taxa de conclusão não é calculada.
 
 Os comentários ficam disponíveis para leitura e busca manual. Atualmente o sistema **não usa inteligência artificial, análise de sentimento ou classificação automática por assunto**. As respostas são apresentadas como anônimas, mas quem responde pode incluir dados pessoais no próprio texto.
+
+### Formulário público
+
+<p align="center">
+  <img src="public/screenshots/pesquisa-teste.png" alt="Formulário público de uma pesquisa de demonstração" width="900">
+</p>
+
+*Pesquisa fictícia com nota e comentário de exemplo e o Turnstile de teste marcado; a resposta não foi enviada.*
 
 ### Respostas
 
