@@ -4,6 +4,11 @@ Plataforma para criar pesquisas de satisfação, compartilhar formulários públ
 
 Novas pesquisas usam uma nota obrigatória de 1 a 5 e um comentário opcional. O painel apresenta as respostas e os relatórios descritos abaixo; atualmente não há análise automática dos comentários.
 
+## Versão final
+
+- **Tag:** [`v1.0.1`](https://github.com/joaovictormelo1312/voz-do-cliente/releases/tag/v1.0.1)
+- **Commit:** [`d404f2264a88218ffe107437d41200ee57eaef3b`](https://github.com/joaovictormelo1312/voz-do-cliente/commit/d404f2264a88218ffe107437d41200ee57eaef3b)
+
 ## Tecnologias
 
 - **Aplicação e API:** Next.js, React e TypeScript.
