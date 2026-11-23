@@ -20,6 +20,80 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Telas da aplicação
+
+### Login
+
+<p align="center">
+  <img src="public/screenshots/login.png" alt="Tela de login" width="600">
+</p>
+
+*A tela de login permite entrar com e-mail e senha, recuperar a senha ou acessar o cadastro.*
+
+### Cadastro
+
+<p align="center">
+  <img src="public/screenshots/cadastro.png" alt="Tela de cadastro" width="600">
+</p>
+
+*A tela de cadastro reúne nome, e-mail, senha e confirmação de senha para criar uma conta.*
+
+### Recuperação de senha
+
+<p align="center">
+  <img src="public/screenshots/recuperar-senha.png" alt="Tela de recuperação de senha" width="600">
+</p>
+
+*A tela de recuperação de senha solicita o e-mail cadastrado e envia um link para redefinição.*
+
+### Redefinição de senha
+
+<p align="center">
+  <img src="public/screenshots/redefinir-senha.png" alt="Tela de redefinição de senha" width="600">
+</p>
+
+*A tela de redefinição permite informar uma nova senha e confirmá-la antes de salvar.*
+
+### Visão geral
+
+<p align="center">
+  <img src="public/screenshots/visao-geral.png" alt="Tela de visão geral" width="900">
+</p>
+
+*A visão geral reúne indicadores, volume de respostas, uma resposta em destaque e as pesquisas recentes.*
+
+### Pesquisas
+
+<p align="center">
+  <img src="public/screenshots/pesquisas.png" alt="Tela de pesquisas" width="900">
+</p>
+
+*A tela de pesquisas permite criar, buscar e filtrar pesquisas por status.*
+
+### Respostas
+
+<p align="center">
+  <img src="public/screenshots/respostas.png" alt="Tela de respostas" width="900">
+</p>
+
+*A tela de respostas apresenta comentários, notas, sentimentos e filtros por pesquisa.*
+
+### Relatórios
+
+<p align="center">
+  <img src="public/screenshots/relatorios.png" alt="Tela de relatórios" width="900">
+</p>
+
+*A tela de relatórios consolida indicadores, gráficos de respostas e distribuição das avaliações.*
+
+### Configurações
+
+<p align="center">
+  <img src="public/screenshots/configuracoes.png" alt="Tela de configurações" width="900">
+</p>
+
+*A tela de configurações reúne perfil, senha, notificações e preferências de privacidade.*
+
 ## Executar com Docker
 
 Com Docker e Docker Compose instalados, execute na pasta `sistema-web`:
