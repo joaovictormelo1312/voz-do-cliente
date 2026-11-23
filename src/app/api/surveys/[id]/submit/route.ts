@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { submitSurveySchema } from "@/lib/validation";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
+import { z } from "zod";
+import { readSurveyBody } from "@/lib/request-body";
+import { verifySurveyChallenge } from "@/lib/turnstile";
+import { createHash } from "node:crypto";
 
 function errorResponse(code: string, message: string, status: number) {
   const response: ApiResponse<null> = {
@@ -28,63 +32,47 @@ export async function POST(
 ) {
   try {
     const params = await props.params;
-    const body = await request.json();
-
-    const survey = await db.getSurvey(params.id);
-    if (!survey) {
+    if (!z.uuid().safeParse(params.id).success) {
       return errorResponse("NOT_FOUND", "Survey not found", 404);
     }
-
-    // Validate survey is active and accepting responses
-    const isValid = await db.validateSurveyForSubmission(survey.slug);
-    if (!isValid) {
-      return errorResponse(
-        "SURVEY_INACTIVE",
-        "Survey is not active or accepting responses",
-        400
-      );
+    const body = await readSurveyBody(request);
+    const validated = body.ok ? submitSurveySchema.pick({ answers: true }).extend({
+      challenge_token: z.string().min(1).max(2048),
+    }).safeParse(body.value) : null;
+    if (!body.ok || !validated?.success) {
+      if (!body.ok && body.reason === "too_large") {
+        return errorResponse("PAYLOAD_TOO_LARGE", "O envio excede o tamanho permitido.", 413);
+      }
+      return errorResponse("VALIDATION_ERROR", "As respostas são inválidas ou incompletas.", 400);
     }
-
-    // Validate submission data
-    const submitData = {
-      survey_slug: survey.slug,
-      answers: body.answers || [],
-    };
-
-    const validated = submitSurveySchema.parse(submitData);
-
-    const result = await db.submitSurvey(
-      validated.survey_slug,
-      validated.answers
-    );
-
-    if (!result) {
-      return errorResponse(
-        "SUBMISSION_FAILED",
-        "Failed to submit survey responses",
-        400
-      );
+    const verification = await verifySurveyChallenge(validated.data.challenge_token);
+    if (verification === "unavailable") {
+      return errorResponse("VERIFICATION_UNAVAILABLE", "Verificação de segurança indisponível. Tente novamente.", 503);
     }
-
-    if (result.errors && result.errors.length > 0) {
-      return errorResponse(
-        "VALIDATION_FAILED",
-        "Some required questions were not answered",
-        400
-      );
+    if (verification === "invalid") {
+      return errorResponse("VERIFICATION_FAILED", "Não foi possível confirmar a verificação. Tente novamente.", 400);
     }
+    const tokenHash = createHash("sha256").update(validated.data.challenge_token).digest("hex");
+    const submissionId = await db.submitSurvey(params.id, validated.data.answers, tokenHash);
 
     return successResponse(
-      { submission_id: result.submission_id, message: "Response recorded successfully" },
+      { submission_id: submissionId, message: "Response recorded successfully" },
       201
     );
-  } catch (error: any) {
-    console.error("Error submitting survey:", error);
-
-    if (error.name === "ZodError") {
-      return errorResponse("VALIDATION_ERROR", "Invalid submission data", 400);
+  } catch (error) {
+    if (error instanceof db.PublicSurveyError) {
+      if (error.code === "SURVEY_UNAVAILABLE") return errorResponse("SURVEY_INACTIVE", "Pesquisa indisponível.", 400);
+      if (error.code === "INVALID_ANSWERS") return errorResponse("VALIDATION_ERROR", "As respostas são inválidas ou incompletas.", 400);
+      if (error.code === "CHALLENGE_REUSED") return errorResponse("VERIFICATION_FAILED", "Verificação já utilizada. Tente novamente.", 400);
+      if (error.code === "RATE_LIMITED") {
+        return NextResponse.json(
+          { success: false, error: { code: "RATE_LIMITED", message: "Muitas respostas recebidas. Tente novamente em um minuto." } },
+          { status: 429, headers: { "Retry-After": "60" } },
+        );
+      }
     }
 
+    console.error("Error submitting survey:", error);
     return errorResponse(
       "INTERNAL_ERROR",
       "Failed to submit survey responses",

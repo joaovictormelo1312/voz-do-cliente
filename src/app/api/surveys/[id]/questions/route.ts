@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createQuestionSchema, updateQuestionSchema } from "@/lib/validation";
+import { ZodError } from "zod";
+import { createQuestionSchema } from "@/lib/validation";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
 
-async function getAuthUser(request: NextRequest) {
+async function getAuthUser() {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -41,7 +42,7 @@ export async function GET(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -70,7 +71,7 @@ export async function POST(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -87,24 +88,19 @@ export async function POST(
     const body = await request.json();
     const validated = createQuestionSchema.parse(body);
 
-    const question = await db.createQuestion(params.id, validated);
-
-    // If single_choice, create options
-    if (validated.kind === "single_choice" && body.options) {
-      for (const option of body.options) {
-        await db.createQuestionOption(
-          question.id,
-          option.label,
-          option.position
-        );
-      }
-    }
+    const question = await db.createQuestion(params.id, validated, validated.options);
 
     return successResponse(question, 201);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating question:", error);
 
-    if (error.name === "ZodError") {
+    if (db.isSurveyStructureLocked(error)) {
+      return errorResponse("SURVEY_LOCKED", "Não é possível alterar perguntas após receber respostas.", 409);
+    }
+    if (typeof error === "object" && error !== null && "message" in error && error.message === "QUESTION_LIMIT_REACHED") {
+      return errorResponse("QUESTION_LIMIT", "Uma pesquisa pode ter até 200 perguntas.", 400);
+    }
+    if (error instanceof ZodError) {
       return errorResponse("VALIDATION_ERROR", "Invalid question data", 400);
     }
 

@@ -11,12 +11,7 @@ Este é um backend Next.js com API REST completa para o sistema "Voz do Cliente"
 ## 🔐 Authentication
 
 ### Login Required
-Endpoints protegidos requerem autenticação via Supabase JWT token no header `Authorization`.
-
-```bash
-curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  http://localhost:3000/api/surveys
-```
+Endpoints protegidos usam o cookie de sessão Supabase obtido no login da aplicação. O cabeçalho `Authorization: Bearer` isolado não autentica estas rotas.
 
 ### Public Endpoints
 Alguns endpoints são públicos (como responder pesquisa):
@@ -66,7 +61,7 @@ List user surveys with pagination
 
 **Example:**
 ```bash
-curl -H "Authorization: Bearer TOKEN" \
+curl -b cookies.txt \
   http://localhost:3000/api/surveys?page=1&page_size=5
 ```
 
@@ -110,7 +105,7 @@ Create new survey
 
 **Example:**
 ```bash
-curl -X POST -H "Authorization: Bearer TOKEN" \
+curl -X POST -b cookies.txt \
   -H "Content-Type: application/json" \
   -d '{
     "title": "My Survey",
@@ -163,7 +158,7 @@ Get survey details with questions
 
 **Example:**
 ```bash
-curl -H "Authorization: Bearer TOKEN" \
+curl -b cookies.txt \
   http://localhost:3000/api/surveys/abc123
 ```
 
@@ -344,6 +339,7 @@ Submit survey responses (PUBLIC - no auth required)
 **Body:**
 ```json
 {
+  "challenge_token": "turnstile-token",
   "answers": [
     {
       "question_id": "uuid",
@@ -366,6 +362,7 @@ Submit survey responses (PUBLIC - no auth required)
 - Survey must be within `starts_at` and `ends_at` window
 - All required questions must be answered
 - Answer values must match question type
+- A fresh Cloudflare Turnstile token with action `survey_submit` is required and validated by the server.
 
 **Response:** 201 Created
 ```json
@@ -382,12 +379,15 @@ Submit survey responses (PUBLIC - no auth required)
 - 400 SURVEY_INACTIVE: Survey not active
 - 400 VALIDATION_FAILED: Required questions missing
 - 400 VALIDATION_ERROR: Invalid answer data
+- 400 VERIFICATION_FAILED: Invalid, expired, or reused challenge
+- 503 VERIFICATION_UNAVAILABLE: Verification service or configuration unavailable
 
 **Example:**
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
+    "challenge_token": "TURNSTILE_TOKEN",
     "answers": [
       {"question_id": "abc", "rating": 5},
       {"question_id": "def", "text_value": "Excellent!"}
@@ -405,6 +405,13 @@ Get survey results and analytics
 
 **Authentication:** Required ✅
 
+The response also includes `submissions`: each submission has `id`,
+`survey_id`, `submitted_at`, and its `answers` (including question ID and
+the recorded rating, text or option ID). These records are available only
+to the survey owner.
+
+The `completion_rate` field is `null`: survey starts and abandonments are not tracked.
+
 **Response:**
 ```json
 {
@@ -417,7 +424,7 @@ Get survey results and analytics
       "created_at": "2026-11-22T21:50:00Z"
     },
     "total_responses": 42,
-    "completion_rate": 0.85,
+    "completion_rate": null,
     "questions_results": [
       {
         "question": {
@@ -470,11 +477,11 @@ Get survey by slug for responding (PUBLIC)
 **Rules:**
 - Survey must be active (`status: "active"`)
 
-**Response:** 200 OK (same structure as GET /surveys/[id])
+**Response:** 200 OK with public survey fields, questions, and `turnstile_site_key` (public key, or `null` if not configured); it does not include `owner_id`.
 
 **Errors:**
 - 404 NOT_FOUND: Survey not found
-- 403 SURVEY_INACTIVE: Survey not active
+- 404 NOT_FOUND: Survey unavailable, inactive or outside its availability window
 
 **Example:**
 ```bash
@@ -523,7 +530,12 @@ curl http://localhost:3000/api/surveys/by-slug/abc-123-uuid
 | `VALIDATION_ERROR` | 400 | Invalid input data |
 | `VALIDATION_FAILED` | 400 | Validation rules failed |
 | `SURVEY_INACTIVE` | 400 | Survey not accepting responses |
+| `PAYLOAD_TOO_LARGE` | 413 | Submission body exceeds 5,000,000 bytes |
+| `VERIFICATION_FAILED` | 400 | Challenge invalid, expired or reused |
+| `VERIFICATION_UNAVAILABLE` | 503 | Challenge verification unavailable |
 | `INTERNAL_ERROR` | 500 | Server error |
+
+Submission bodies are limited to 5,000,000 bytes and 200 answers. A server-validated Turnstile token is required, and database permissions prevent anonymous direct submission. No shared per-survey rate cap is applied; configure infrastructure-level protection against volumetric attacks and per-IP abuse, including direct access to Supabase. Challenges can still reject legitimate visitors or be unavailable.
 
 ---
 
@@ -533,79 +545,41 @@ curl http://localhost:3000/api/surveys/by-slug/abc-123-uuid
 ```bash
 # 1. Create survey
 SURVEY_ID=$(curl -X POST \
-  -H "Authorization: Bearer TOKEN" \
+  -b cookies.txt \
   -H "Content-Type: application/json" \
   -d '{"title":"Feedback","category":"Support"}' \
   http://localhost:3000/api/surveys | jq -r '.data.id')
 
 # 2. Add question
 QUESTION_ID=$(curl -X POST \
-  -H "Authorization: Bearer TOKEN" \
+  -b cookies.txt \
   -H "Content-Type: application/json" \
   -d '{"title":"How satisfied?","kind":"rating","required":true,"position":0}' \
   http://localhost:3000/api/surveys/$SURVEY_ID/questions | jq -r '.data.id')
 
 # 3. Activate survey
 curl -X PATCH \
-  -H "Authorization: Bearer TOKEN" \
+  -b cookies.txt \
   -H "Content-Type: application/json" \
   -d '{"status":"active"}' \
   http://localhost:3000/api/surveys/$SURVEY_ID
 
-# 4. Submit response (public)
+# 4. Submit response (public; obtain TURNSTILE_TOKEN from the widget)
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"answers":[{"question_id":"'$QUESTION_ID'","rating":5}]}' \
+  -d '{"challenge_token":"'$TURNSTILE_TOKEN'","answers":[{"question_id":"'$QUESTION_ID'","rating":5}]}' \
   http://localhost:3000/api/surveys/$SURVEY_ID/submit
 
 # 5. Get results
-curl -H "Authorization: Bearer TOKEN" \
+curl -b cookies.txt \
   http://localhost:3000/api/surveys/$SURVEY_ID/results
 ```
 
 ---
 
-## 📦 Database Layer (In-Memory for MVP)
+## Database
 
-Currently using in-memory storage in `src/lib/database.ts`. When connecting to Supabase:
-1. Replace mock Maps with Supabase queries
-2. Keep the same function signatures
-3. All validation and business logic stays in `database.ts`
-
----
-
-## ✅ Implementation Status
-
-| Feature | Status | Note |
-|---------|--------|------|
-| Survey CRUD | ✅ Complete | All operations ready |
-| Question CRUD | ✅ Complete | Supports all question types |
-| Options Management | ✅ Complete | For single_choice questions |
-| Submissions | ✅ Complete | Public endpoint working |
-| Validation | ✅ Complete | Zod schemas included |
-| Results/Analytics | ✅ Complete | Aggregations implemented |
-| Authentication | ✅ Complete | Supabase JWT ready |
-| Authorization | ✅ Complete | Row-level checks in place |
-
----
-
-## 🔄 Next Steps: Supabase Integration
-
-The backend is architecture-agnostic. To connect to Supabase:
-
-1. Update `src/lib/database.ts` to use Supabase client
-2. Replace in-memory Maps with actual queries
-3. All type signatures and business logic stay the same
-
-Example migration approach:
-```typescript
-// Before (current)
-const surveys = new Map<string, Survey>();
-export async function createSurvey(...) { surveys.set(...) }
-
-// After (Supabase)
-const supabase = createClient();
-export async function createSurvey(...) { 
-  return await supabase.from("surveys").insert(...).single();
-}
-```
+The API uses Supabase with RLS and transactional public submission functions.
+Apply the migrations and configure authentication as described in
+`SUPABASE_INTEGRATION.md`. Public submissions require server-side Turnstile
+verification; public reads and application traffic require infrastructure-level protection.

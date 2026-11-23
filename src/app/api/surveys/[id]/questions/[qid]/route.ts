@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { updateQuestionSchema } from "@/lib/validation";
+import { ZodError } from "zod";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
 
-async function getAuthUser(request: NextRequest) {
+async function getAuthUser() {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -41,7 +42,7 @@ export async function PATCH(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -68,10 +69,13 @@ export async function PATCH(
     }
 
     return successResponse(updated);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error updating question:", error);
 
-    if (error.name === "ZodError") {
+    if (db.isSurveyStructureLocked(error)) {
+      return errorResponse("SURVEY_LOCKED", "Não é possível alterar perguntas após receber respostas.", 409);
+    }
+    if (error instanceof ZodError) {
       return errorResponse("VALIDATION_ERROR", "Invalid question data", 400);
     }
 
@@ -86,7 +90,7 @@ export async function DELETE(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -112,6 +116,9 @@ export async function DELETE(
     return successResponse({ id: params.qid });
   } catch (error) {
     console.error("Error deleting question:", error);
+    if (db.isSurveyStructureLocked(error)) {
+      return errorResponse("SURVEY_LOCKED", "Não é possível alterar perguntas após receber respostas.", 409);
+    }
     return errorResponse("INTERNAL_ERROR", "Failed to delete question", 500);
   }
 }

@@ -50,6 +50,15 @@ export interface SurveyWithQuestions extends Survey {
   questions: QuestionWithOptions[];
 }
 
+export interface PublicSurvey {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  status: SurveyStatus;
+  questions: Array<Omit<Question, "survey_id"> & { options: Array<Pick<QuestionOption, "id" | "label" | "position">> }>;
+}
+
 export interface QuestionWithOptions extends Question {
   options: QuestionOption[];
 }
@@ -57,12 +66,13 @@ export interface QuestionWithOptions extends Question {
 export interface SurveyResult {
   survey: Survey;
   total_responses: number;
-  completion_rate: number;
+  completion_rate: null;
   questions_results: QuestionResult[];
+  submissions: Array<Submission & { answers: Answer[] }>;
 }
 
 export interface QuestionResult {
-  question: Question;
+  question: QuestionWithOptions;
   responses_count: number;
   rating_average?: number;
   rating_distribution?: Record<number, number>;

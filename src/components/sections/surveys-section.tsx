@@ -1,269 +1,187 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Copy,
-  Plus,
-  Search,
-  X,
-  ListChecks,
-  CheckCircle2,
-  MessageSquare,
-  TrendingUp,
-} from "lucide-react";
-import {
-  filterSurveys,
-  MockSurvey,
-  mockActiveSurveys,
-  mockAverageCompletion,
-  mockSurveys,
-  mockTotalResponses,
-  SurveyStatusFilter,
-  SurveyStatus,
-} from "@/lib/mock-data";
+import { useState, type FormEvent } from "react";
+import { Copy, Plus, Search, X } from "lucide-react";
+import { apiRequest } from "@/lib/dashboard-data";
+import type { Question, QuestionKind, Survey, SurveyResult, SurveyWithQuestions } from "@/lib/types";
 
-export function SurveysSection() {
-  const [surveys, setSurveys] = useState(mockSurveys);
+type Props = {
+  surveys: Survey[];
+  results: SurveyResult[];
+  refresh: () => Promise<void>;
+};
+
+const statusLabels = { draft: "Rascunho", active: "Ativa", closed: "Encerrada" } as const;
+
+export function StatusPill({ status }: { status: Survey["status"] }) {
+  const className = status === "active" ? "status-active" : status === "draft" ? "status-draft" : "status-closed";
+  return <span className={`status-pill ${className}`}><i />{statusLabels[status]}</span>;
+}
+
+export function SurveysSection({ surveys, results, refresh }: Props) {
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>("Todas");
-  const [isCreating, setIsCreating] = useState(false);
+  const [filter, setFilter] = useState<"all" | Survey["status"]>("all");
+  const [creating, setCreating] = useState(false);
+  const [selected, setSelected] = useState<SurveyWithQuestions | null>(null);
+  const [kind, setKind] = useState<QuestionKind>("rating");
+  const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [formError, setFormError] = useState("");
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (isCreating && !dialog.open) {
-      dialog.showModal();
-    } else if (!isCreating && dialog.open) {
-      dialog.close();
-    }
-  }, [isCreating]);
-
-  const filteredSurveys = useMemo(
-    () => filterSurveys(surveys, query, statusFilter),
-    [query, statusFilter, surveys],
+  const filtered = surveys.filter((survey) =>
+    (filter === "all" || survey.status === filter) &&
+    `${survey.title} ${survey.category}`.toLocaleLowerCase("pt-BR").includes(query.toLocaleLowerCase("pt-BR")),
   );
+
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await action();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível concluir a operação.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openSurvey(id: string) {
+    setSelected(await apiRequest<SurveyWithQuestions>(`/api/surveys/${id}`));
+  }
 
   function createSurvey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = String(formData.get("name") ?? "").trim();
-    const category = String(formData.get("category") ?? "").trim();
-    if (!name || !category) {
-      setFormError("Preencha o nome e a categoria para criar o rascunho.");
-      return;
-    }
-
-    const initials = name
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase();
-    const survey: MockSurvey = {
-      id: `mock-${Date.now()}`,
-      name,
-      category,
-      responses: 0,
-      completion: 0,
-      score: null,
-      status: "Rascunho",
-      color: "lavender",
-      initials,
-      createdAt: "Agora",
-      lastResponse: "—",
-    };
-    setSurveys((current) => [survey, ...current]);
-    setStatusFilter("Todas");
-    setQuery("");
-    setIsCreating(false);
-    setFormError("");
-    setNotice("Rascunho criado.");
-    window.setTimeout(() => setNotice(""), 3500);
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    void run(async () => {
+      const survey = await apiRequest<Survey>("/api/surveys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: String(data.get("title")).trim(), category: String(data.get("category")).trim() }),
+      });
+      setCreating(false);
+      setNotice("Rascunho criado. Adicione perguntas antes de ativá-lo.");
+      await refresh();
+      await openSurvey(survey.id);
+    });
   }
 
-  async function copyLink(id: string) {
-    const exampleLink = `${window.location.origin}/pesquisa/${id}`;
-    if (!navigator.clipboard) {
-      setNotice("Não foi possível copiar o link neste navegador.");
-      window.setTimeout(() => setNotice(""), 3500);
+  function addQuestion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const options = String(data.get("options") ?? "").split("\n").map((label) => label.trim()).filter(Boolean);
+    if (kind === "single_choice" && options.length < 2) {
+      setError("Informe pelo menos duas opções, uma por linha.");
       return;
     }
+    void run(async () => {
+      await apiRequest<Question>(`/api/surveys/${selected.id}/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: String(data.get("title")).trim(),
+          kind,
+          required: data.has("required"),
+          position: selected.questions.reduce((max, question) => Math.max(max, question.position), -1) + 1,
+          ...(kind === "single_choice" ? { options: options.map((label, position) => ({ label, position })) } : {}),
+        }),
+      });
+      form.reset();
+      setKind("rating");
+      await openSurvey(selected.id);
+      await refresh();
+      setNotice("Pergunta adicionada.");
+    });
+  }
 
-    try {
-      await navigator.clipboard.writeText(exampleLink);
-      setNotice("Link copiado.");
-    } catch (error) {
-      console.error("Não foi possível copiar o link.", error);
-      setNotice("Não foi possível copiar o link.");
+  function changeStatus(status: Survey["status"]) {
+    if (!selected) return;
+    if (status === "active" && selected.questions.length === 0) {
+      setError("Adicione pelo menos uma pergunta antes de ativar a pesquisa.");
+      return;
     }
-    window.setTimeout(() => setNotice(""), 3500);
+    void run(async () => {
+      await apiRequest<Survey>(`/api/surveys/${selected.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      await openSurvey(selected.id);
+      await refresh();
+      setNotice(status === "active" ? "Pesquisa ativa. O link público já pode ser compartilhado." : "Status atualizado.");
+    });
+  }
+
+  async function copyLink(survey: Survey) {
+    await run(async () => {
+      if (!navigator.clipboard) throw new Error("Não foi possível copiar o link neste navegador.");
+      await navigator.clipboard.writeText(`${window.location.origin}/pesquisa/${survey.slug}`);
+      setNotice(survey.status === "active" ? "Link copiado." : "Link copiado. A pesquisa precisa estar ativa para receber respostas.");
+    });
   }
 
   return (
     <section className="section-view">
       <div className="section-title-row">
-        <div>
-          <p className="eyebrow">Gerenciamento</p>
-          <h1>Pesquisas</h1>
-          <p className="section-description">Crie e acompanhe pesquisas de satisfação.</p>
-        </div>
-        <button className="primary-button" onClick={() => setIsCreating(true)}>
-          <Plus size={16} /> Nova pesquisa
-        </button>
+        <div><p className="eyebrow">Gerenciamento</p><h1>Pesquisas</h1><p className="section-description">Crie e acompanhe pesquisas de satisfação.</p></div>
+        <button className="primary-button" type="button" onClick={() => { setCreating(true); setSelected(null); setError(""); }}><Plus size={16} /> Nova pesquisa</button>
       </div>
+      <p className="settings-demo-note">Após receber respostas, as perguntas não podem ser alteradas.</p>
+      {notice && <p className="inline-notice" role="status">{notice}</p>}
+      {error && <p className="form-error" role="alert">{error}</p>}
 
-      <div className="section-stats">
-        <MiniStat label="Total de pesquisas" value={String(surveys.length).padStart(2, "0")} icon={<ListChecks size={18} />} color="indigo" />
-        <MiniStat label="Ativas" value={String(mockActiveSurveys).padStart(2, "0")} icon={<CheckCircle2 size={18} />} color="emerald" />
-        <MiniStat label="Respostas recebidas" value={mockTotalResponses.toLocaleString("pt-BR")} icon={<MessageSquare size={18} />} color="amber" />
-        <MiniStat label="Conclusão média" value={`${mockAverageCompletion}%`} icon={<TrendingUp size={18} />} color="cyan" />
-      </div>
+      {creating && <form className="panel settings-card" onSubmit={createSurvey}>
+        <div className="modal-heading"><div><h2>Criar pesquisa</h2><p>Adicione um título e uma categoria para começar.</p></div><button className="more-button" type="button" aria-label="Fechar" onClick={() => setCreating(false)}><X size={19} /></button></div>
+        <label className="form-field">Nome da pesquisa<input name="title" maxLength={80} required /></label>
+        <label className="form-field">Categoria<input name="category" maxLength={40} required /></label>
+        <div className="modal-actions"><button className="primary-button" disabled={busy} type="submit">{busy ? "Criando..." : "Criar rascunho"}</button></div>
+      </form>}
+
+      {selected && <article className="panel settings-card">
+        <div className="modal-heading"><div><h2>{selected.title}</h2><p>{selected.category} · {statusLabels[selected.status]}</p></div><button className="more-button" type="button" aria-label="Fechar detalhes" onClick={() => setSelected(null)}><X size={19} /></button></div>
+        <h3>Perguntas</h3>
+        {selected.questions.length === 0 && <p>Nenhuma pergunta adicionada.</p>}
+        {selected.questions.map((question) => <div className="response-card" key={question.id}>
+          <div className="response-main"><strong>{question.title}</strong><p>{question.kind === "rating" ? "Avaliação de 1 a 5" : question.kind === "text" ? "Resposta aberta" : `Escolha única: ${question.options.map((option) => option.label).join(", ")}`} · {question.required ? "Obrigatória" : "Opcional"}</p></div>
+          <button type="button" className="secondary-button" disabled={busy} onClick={() => {
+            if (!window.confirm("Excluir esta pergunta? Perguntas de pesquisas com respostas não podem ser excluídas.")) return;
+            void run(async () => {
+              await apiRequest<{ id: string }>(`/api/surveys/${selected.id}/questions/${question.id}`, { method: "DELETE" });
+              await openSurvey(selected.id);
+              await refresh();
+            });
+          }}>Excluir</button>
+        </div>)}
+        <form onSubmit={addQuestion}>
+          <label className="form-field">Nova pergunta<input name="title" maxLength={1000} required /></label>
+          <label className="form-field">Tipo<select value={kind} onChange={(event) => setKind(event.target.value as QuestionKind)}><option value="rating">Avaliação de 1 a 5</option><option value="single_choice">Escolha única</option><option value="text">Resposta aberta</option></select></label>
+          {kind === "single_choice" && <label className="form-field">Opções (uma por linha)<textarea name="options" required rows={3} /></label>}
+          <label><input type="checkbox" name="required" defaultChecked /> Resposta obrigatória</label>
+          <div className="modal-actions"><button className="secondary-button" disabled={busy} type="submit"><Plus size={15} /> Adicionar pergunta</button></div>
+        </form>
+        <div className="modal-actions">
+          {selected.status !== "active" && <button className="primary-button" disabled={busy} type="button" onClick={() => changeStatus("active")}>Ativar pesquisa</button>}
+          {selected.status === "active" && <button className="secondary-button" disabled={busy} type="button" onClick={() => changeStatus("closed")}>Encerrar pesquisa</button>}
+          <button className="secondary-button" disabled={busy} type="button" onClick={() => void copyLink(selected)}><Copy size={15} /> Copiar link</button>
+        </div>
+      </article>}
 
       <div className="panel section-panel">
         <div className="section-toolbar">
           <div className="filter-tabs" role="group" aria-label="Filtrar por status">
-            {(["Todas", "Ativa", "Rascunho", "Encerrada"] as SurveyStatusFilter[]).map((status) => (
-              <button
-                aria-pressed={statusFilter === status}
-                className={`filter-tab${statusFilter === status ? " selected" : ""}`}
-                key={status}
-                onClick={() => setStatusFilter(status)}
-              >
-                {status}
-                {status === "Todas" && <span>{surveys.length}</span>}
-              </button>
-            ))}
+            {(["all", "active", "draft", "closed"] as const).map((value) => <button key={value} type="button" aria-pressed={filter === value} className={`filter-tab${filter === value ? " selected" : ""}`} onClick={() => setFilter(value)}>{value === "all" ? "Todas" : statusLabels[value]}</button>)}
           </div>
-          <label className="section-search">
-            <Search size={16} />
-            <input
-              aria-label="Buscar pesquisa"
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar pesquisa..."
-              value={query}
-            />
-          </label>
+          <label className="section-search"><Search size={16} /><input aria-label="Buscar pesquisa" placeholder="Buscar pesquisa..." value={query} onChange={(event) => setQuery(event.target.value)} /></label>
         </div>
-        {notice && <p className="inline-notice" role="status" aria-live="polite">{notice}</p>}
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Pesquisa</th>
-                <th>Status</th>
-                <th>Respostas</th>
-                <th>Conclusão</th>
-                <th>Nota média</th>
-                <th>Última resposta</th>
-                <th scope="col">Link</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSurveys.map((survey) => (
-                <tr key={survey.id}>
-                  <td>
-                    <div className="survey-name-cell">
-                      <span className={`survey-avatar ${survey.color}`}>{survey.initials}</span>
-                      <span><strong>{survey.name}</strong><small>{survey.category} · Criada em {survey.createdAt}</small></span>
-                    </div>
-                  </td>
-                  <td><StatusPill status={survey.status} /></td>
-                  <td className="table-number">{survey.responses}</td>
-                  <td><ProgressValue value={survey.completion} /></td>
-                  <td>{survey.score === null ? <span className="muted-value">Sem respostas</span> : <span className="score">★ <strong>{survey.score.toFixed(1).replace(".", ",")}</strong></span>}</td>
-                  <td className="muted-value">{survey.lastResponse}</td>
-                  <td>
-                    <div className="table-actions">
-                      <button className="more-button" aria-label={`Copiar link de ${survey.name}`} onClick={() => copyLink(survey.id)} title="Copiar link">
-                        <Copy size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredSurveys.length === 0 && (
-                <tr><td className="empty-table" colSpan={7}>Nenhuma pesquisa encontrada com esses filtros.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="table-pagination">
-          <span>Exibindo {filteredSurveys.length} de {surveys.length} pesquisas</span>
-          <span className="pagination-current">Página 1</span>
-        </div>
+        <div className="table-wrap"><table><thead><tr><th>Pesquisa</th><th>Status</th><th>Respostas</th><th>Ações</th></tr></thead><tbody>
+          {filtered.map((survey) => <tr key={survey.id}><td><strong>{survey.title}</strong><small> · {survey.category}</small></td><td><StatusPill status={survey.status} /></td><td>{results.find((result) => result.survey.id === survey.id)?.total_responses ?? "—"}</td><td><button className="text-link" type="button" disabled={busy} onClick={() => void run(() => openSurvey(survey.id))}>Gerenciar</button>{" · "}<button className="text-link" type="button" disabled={busy} onClick={() => void copyLink(survey)}>Copiar link</button></td></tr>)}
+          {filtered.length === 0 && <tr><td className="empty-table" colSpan={4}>Nenhuma pesquisa encontrada.</td></tr>}
+        </tbody></table></div>
+        <div className="table-pagination">Exibindo {filtered.length} de {surveys.length} pesquisas</div>
       </div>
-
-      <div className="section-tip">
-        <div><strong>Dica para suas pesquisas</strong><p>Pesquisas curtas tendem a ter mais respostas. Comece com uma pergunta objetiva e relevante para a experiência.</p></div>
-      </div>
-
-      <dialog
-        aria-labelledby="create-survey-title"
-        className="modal-dialog"
-        onCancel={(event) => {
-          event.preventDefault();
-          dialogRef.current?.close();
-        }}
-        onClose={() => setIsCreating(false)}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            dialogRef.current?.close();
-          }
-        }}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) {
-            dialogRef.current?.close();
-          }
-        }}
-        ref={dialogRef}
-      >
-        {isCreating && (
-          <form className="modal-card" onSubmit={createSurvey}>
-            <div className="modal-heading">
-              <div><span className="metric-icon purple"><Plus size={18} /></span><h2 id="create-survey-title">Criar pesquisa</h2><p>Adicione um título e uma categoria para começar.</p></div>
-              <button className="more-button" type="button" aria-label="Fechar" onClick={() => dialogRef.current?.close()}><X size={19} /></button>
-            </div>
-            <label className="form-field">Nome da pesquisa<input maxLength={80} name="name" onChange={() => setFormError("")} placeholder="Ex.: Satisfação com o atendimento" required /></label>
-            <label className="form-field">Categoria<input maxLength={40} name="category" onChange={() => setFormError("")} placeholder="Ex.: Pós-venda" required /></label>
-            {formError && <p className="form-error" role="alert">{formError}</p>}
-            <div className="modal-actions"><button className="secondary-button" type="button" onClick={() => dialogRef.current?.close()}>Cancelar</button><button className="primary-button" type="submit"><Plus size={15} /> Criar rascunho</button></div>
-          </form>
-        )}
-      </dialog>
     </section>
   );
-}
-
-function MiniStat({ label, value, icon, color = "gray" }: { label: string; value: string; icon?: React.ReactNode; color?: string }) {
-  const colorClasses: Record<string, string> = {
-    indigo: "text-indigo-500",
-    emerald: "text-emerald-500",
-    amber: "text-amber-500",
-    cyan: "text-cyan-500",
-    gray: "text-gray-500",
-  };
-  
-  return (
-    <article className="mini-stat">
-      {icon && <span className={`${colorClasses[color] || colorClasses.gray}`}>{icon}</span>}
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-      </div>
-    </article>
-  );
-}
-
-export function StatusPill({ status }: { status: SurveyStatus }) {
-  const className = status === "Ativa" ? "status-active" : status === "Rascunho" ? "status-draft" : "status-closed";
-  return <span className={`status-pill ${className}`}><i />{status}</span>;
-}
-
-export function ProgressValue({ value }: { value: number }) {
-  return <div className="completion-cell"><span className="completion-track"><i style={{ width: `${value}%` }} /></span><span>{value}%</span></div>;
 }

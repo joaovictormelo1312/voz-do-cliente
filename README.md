@@ -60,7 +60,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   <img src="public/screenshots/visao-geral.png" alt="Tela de visão geral" width="900">
 </p>
 
-*A visão geral reúne indicadores, volume de respostas, uma resposta em destaque e as pesquisas recentes.*
+*A visão geral apresenta indicadores e pesquisas cadastradas pela conta.*
 
 ### Pesquisas
 
@@ -68,7 +68,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   <img src="public/screenshots/pesquisas.png" alt="Tela de pesquisas" width="900">
 </p>
 
-*A tela de pesquisas permite criar, buscar e filtrar pesquisas por status.*
+*A tela de pesquisas permite criar, buscar e filtrar pesquisas, adicionar perguntas, ativar ou encerrar pesquisas e copiar o link público.*
 
 ### Respostas
 
@@ -76,7 +76,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   <img src="public/screenshots/respostas.png" alt="Tela de respostas" width="900">
 </p>
 
-*A tela de respostas apresenta comentários, notas, sentimentos e filtros por pesquisa.*
+*A tela de respostas apresenta as respostas anônimas, com busca e filtro por pesquisa.*
 
 ### Relatórios
 
@@ -84,7 +84,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   <img src="public/screenshots/relatorios.png" alt="Tela de relatórios" width="900">
 </p>
 
-*A tela de relatórios consolida indicadores, gráficos de respostas e distribuição das avaliações.*
+*A tela de relatórios consolida indicadores e a distribuição das avaliações recebidas.*
 
 ### Configurações
 
@@ -113,7 +113,7 @@ docker compose down
 
 ## Testes automatizados
 
-Os testes unitários usam o test runner nativo do Node.js e cobrem a validação de dados da conta e a filtragem de pesquisas e respostas (busca textual, status, sentimento e combinações de filtros). Requerem Node.js 22.18 ou superior; não é necessário instalar dependências adicionais.
+Os testes unitários usam o test runner nativo do Node.js e cobrem a validação de dados da conta, filtragem e operações de pesquisas e resultados. Requerem Node.js 22.18 ou superior.
 
 Execute todos os testes na raiz do projeto:
 
@@ -133,19 +133,19 @@ docker compose -f compose.production.yaml down
 ## Login e gerenciamento de conta
 
 1. Crie um projeto no Supabase e habilite autenticação por e-mail e senha, cadastro público e confirmação de e-mail em Authentication. Configure um provedor SMTP adequado para produção.
-2. Copie `.env.example` para `.env.local` e informe a URL do projeto, a chave publicável (ou a chave legada `anon`) e a origem do site em `SITE_URL`. Não use a chave secreta ou `service_role`. Em produção, use a origem HTTPS pública, sem caminho final.
+2. Copie `.env.example` para `.env.local` e informe a URL e as chaves do Supabase, a origem do site em `SITE_URL` e as chaves do Cloudflare Turnstile. A chave secreta do Supabase é usada exclusivamente no servidor para o envio verificado e nunca deve ser exposta ao navegador. Em produção, use a origem HTTPS pública, sem caminho final.
 3. Em Authentication > URL Configuration, configure a Site URL com a mesma origem e permita os redirects `http://localhost:3000/auth/callback` e `http://localhost:3000/auth/callback?flow=recovery` (ou os endereços equivalentes de produção).
 4. Execute `npm install` e `npm run dev`. Acesse `/cadastro` para criar uma conta; confirme o e-mail e abra o link no **mesmo navegador** que iniciou o cadastro. O mesmo requisito vale para a recuperação de senha, pois o fluxo usa PKCE.
 
 O painel exige sessão validada no servidor. Em Configurações é possível editar nome e organização e alterar a senha; o botão Sair encerra a sessão. O e-mail é somente leitura. Caso o Supabase exija reautenticação para alteração de senha, siga as políticas configuradas no projeto. Redirecionamentos inválidos ou expirados exigem nova solicitação.
 
-**Limitações:** o cadastro é público e toda conta autenticada acessa o mesmo painel demonstrativo; não há papéis, convites ou isolamento de organizações. Pesquisas, respostas, notificações e privacidade continuam simuladas e não persistem. Antes de usar dados reais, implemente autorização no servidor e políticas RLS adequadas, além de políticas de proteção contra abuso e limites de envio no Supabase.
+**Limitações:** a API usa o banco Supabase após a aplicação das migrações descritas abaixo. Perguntas e opções não podem ser alteradas após o primeiro envio. Não há papéis ou isolamento de organizações, e as preferências de notificações e privacidade são demonstrativas. O Turnstile verifica cada envio sem uma cota compartilhada por pesquisa, mas não garante ausência de bloqueios ou disponibilidade durante picos. A API limita cada corpo a 5.000.000 bytes. Configure proteção contra tráfego volumétrico e limites apropriados na hospedagem e no Supabase: leituras públicas, identificadores desconhecidos e requisições à aplicação não têm limite por IP. Consulte [a integração](SUPABASE_INTEGRATION.md).
 
-## Migração inicial do banco
+## Banco de dados
 
-A migração em `supabase/migrations/` define pesquisas, perguntas, opções, envios e respostas. Ela habilita RLS: cada conta autenticada acessa apenas as próprias pesquisas e seus resultados. Envios não armazenam nome, e-mail ou conta do respondente; o conteúdo livre pode, ainda assim, conter dados pessoais.
+As migrações em `supabase/migrations/` definem as tabelas, políticas RLS e funções para leitura e envio público. Cada conta autenticada acessa apenas suas próprias pesquisas e resultados. Envios não armazenam nome, e-mail ou conta do respondente; o conteúdo livre pode, ainda assim, conter dados pessoais.
 
-Esta migração **não foi aplicada automaticamente** e não conecta a interface ao banco. O acesso público e a inserção de respostas permanecem bloqueados. Antes de coletar dados reais, é necessário implementar e testar um fluxo público que valide disponibilidade, obrigatoriedade, tipos e opções em uma transação, além de impedir alterações que comprometam o histórico das perguntas. Exclusões de pesquisas ou contas removem os dados associados.
+O envio valida disponibilidade, obrigatoriedade, tipos e opções em uma transação. As perguntas e opções ficam bloqueadas após o primeiro envio; exclusões de pesquisas ou contas removem os dados associados. Migrações pendentes devem ser aplicadas no projeto correto antes de usar a API.
 
 Para aplicá-la, use uma conta autorizada na CLI do Supabase. Na raiz do projeto:
 

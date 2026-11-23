@@ -9,13 +9,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { mockWeeklyResponses } from "@/lib/mock-data";
 
-export function ResponseChart() {
+export function ResponseChart({ data }: { data: Array<{ day: string; responses: number }> }) {
   return (
     <div className="chart-area" role="img" aria-label="Gráfico de respostas recebidas nos últimos sete dias">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={mockWeeklyResponses} margin={{ top: 14, right: 12, bottom: 0, left: -18 }}>
+        <LineChart data={data} margin={{ top: 14, right: 12, bottom: 0, left: -18 }}>
           <CartesianGrid stroke="#e4efec" strokeDasharray="4 5" vertical={false} />
           <XAxis
             axisLine={false}
@@ -28,8 +27,7 @@ export function ResponseChart() {
             axisLine={false}
             tickLine={false}
             tick={{ fill: "#607876", fontSize: 11 }}
-            domain={[0, 80]}
-            ticks={[0, 20, 40, 60, 80]}
+            allowDecimals={false}
           />
           <Tooltip
             contentStyle={{

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createQuestionOptionSchema } from "@/lib/validation";
+import { ZodError } from "zod";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
 
-async function getAuthUser(request: NextRequest) {
+async function getAuthUser() {
   if (!isSupabaseConfigured()) {
     return null;
   }
@@ -41,7 +42,7 @@ export async function POST(
 ) {
   try {
     const params = await props.params;
-    const user = await getAuthUser(request);
+    const user = await getAuthUser();
     if (!user) {
       return errorResponse("UNAUTHORIZED", "Authentication required", 401);
     }
@@ -55,6 +56,10 @@ export async function POST(
       return errorResponse("FORBIDDEN", "Access denied", 403);
     }
 
+    if (!(await db.getSurveyQuestions(params.id)).some((question) => question.id === params.qid)) {
+      return errorResponse("NOT_FOUND", "Question not found", 404);
+    }
+
     const body = await request.json();
     const validated = createQuestionOptionSchema.parse(body);
 
@@ -65,10 +70,13 @@ export async function POST(
     );
 
     return successResponse(option, 201);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error creating option:", error);
 
-    if (error.name === "ZodError") {
+    if (db.isSurveyStructureLocked(error)) {
+      return errorResponse("SURVEY_LOCKED", "Não é possível alterar opções após receber respostas.", 409);
+    }
+    if (error instanceof ZodError) {
       return errorResponse("VALIDATION_ERROR", "Invalid option data", 400);
     }
 

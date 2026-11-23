@@ -37,6 +37,13 @@ export const createQuestionSchema = z.object({
   kind: questionKindSchema,
   required: z.boolean().default(true),
   position: z.number().nonnegative().int("Position must be a non-negative integer"),
+  options: z.array(z.object({
+    label: z.string().trim().min(1).max(500),
+    position: z.number().nonnegative().int(),
+  })).optional(),
+}).refine((data) => data.kind !== "single_choice" || (data.options?.length ?? 0) >= 2, {
+  message: "Single choice questions require at least two options",
+  path: ["options"],
 });
 
 export const updateQuestionSchema = z.object({
@@ -69,7 +76,7 @@ export const submitAnswerSchema = z.object({
 
 export const submitSurveySchema = z.object({
   survey_slug: z.string().uuid("Invalid survey slug"),
-  answers: z.array(submitAnswerSchema).min(1, "At least one answer is required"),
+  answers: z.array(submitAnswerSchema).min(1, "At least one answer is required").max(200, "At most 200 answers are allowed"),
 });
 
 // Type exports

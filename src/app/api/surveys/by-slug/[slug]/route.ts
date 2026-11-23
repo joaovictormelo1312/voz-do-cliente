@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as db from "@/lib/database";
 import { ApiResponse } from "@/lib/types";
+import { z } from "zod";
 
 function errorResponse(code: string, message: string, status: number) {
   const response: ApiResponse<null> = {
@@ -28,28 +29,22 @@ export async function GET(
   try {
     const params = await props.params;
 
-    const surveySummary = await db.getSurveyBySlug(params.slug);
-    if (!surveySummary) {
+    if (!z.uuid().safeParse(params.slug).success) {
       return errorResponse("NOT_FOUND", "Survey not found", 404);
     }
-
-    const survey = await db.getSurveyWithQuestions(surveySummary.id);
-
+    const survey = await db.getPublicSurvey(params.slug);
     if (!survey) {
       return errorResponse("NOT_FOUND", "Survey not found", 404);
     }
 
-    // Only return active surveys or allow if explicitly enabled for public viewing
-    if (survey.status !== "active") {
-      return errorResponse(
-        "SURVEY_INACTIVE",
-        "Survey is not active",
-        403
+    return successResponse({ ...survey, turnstile_site_key: process.env.TURNSTILE_SITE_KEY || null });
+  } catch (error) {
+    if (error instanceof db.PublicSurveyError && error.code === "RATE_LIMITED") {
+      return NextResponse.json(
+        { success: false, error: { code: "RATE_LIMITED", message: "Muitas consultas. Tente novamente em um minuto." } },
+        { status: 429, headers: { "Retry-After": "60" } },
       );
     }
-
-    return successResponse(survey);
-  } catch (error) {
     console.error("Error fetching survey:", error);
     return errorResponse(
       "INTERNAL_ERROR",

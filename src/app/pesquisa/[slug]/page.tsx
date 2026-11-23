@@ -1,7 +1,26 @@
 'use client';
 
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import Script from 'next/script';
+import type { SubmitSurveyInput } from '@/lib/types';
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: {
+        sitekey: string;
+        action: string;
+        callback: (token: string) => void;
+        'expired-callback': () => void;
+        'error-callback': () => void;
+      }) => string;
+      reset: (id: string) => void;
+      remove: (id: string) => void;
+    };
+  }
+}
 
 interface Question {
   id: string;
@@ -18,6 +37,7 @@ interface SurveyData {
   title: string;
   description: string;
   status: string;
+  turnstile_site_key: string | null;
   questions: Question[];
 }
 
@@ -31,6 +51,10 @@ export default function SurveyPage({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scriptReady, setScriptReady] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const challengeContainer = useRef<HTMLDivElement>(null);
+  const challengeId = useRef<string | null>(null);
   const [answers, setAnswers] = useState<
     Record<string, number | string | undefined>
   >({});
@@ -59,14 +83,39 @@ export default function SurveyPage({
     });
   }, [params]);
 
+  React.useEffect(() => {
+    const sitekey = survey?.turnstile_site_key;
+    const container = challengeContainer.current;
+    if (!survey || submitted || !scriptReady || !sitekey || !container || !window.turnstile) return;
+    const id = window.turnstile.render(container, {
+      sitekey,
+      action: 'survey_submit',
+      callback: (token) => setChallengeToken(token),
+      'expired-callback': () => setChallengeToken(null),
+      'error-callback': () => {
+        setChallengeToken(null);
+        setError('Verificação de segurança indisponível. Tente novamente.');
+      },
+    });
+    challengeId.current = id;
+    return () => {
+      window.turnstile?.remove(id);
+      challengeId.current = null;
+    };
+  }, [survey, submitted, scriptReady]);
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!survey) return;
 
     // Validate required fields
     for (const question of survey.questions) {
-      if (question.required && !answers[question.id]) {
+      if (question.required && !String(answers[question.id] ?? '').trim()) {
         setError(`Por favor, responda a: ${question.title}`);
+        return;
+      }
+      if (!challengeToken) {
+        setError('Aguarde a verificação de segurança ou tente novamente.');
         return;
       }
     }
@@ -75,26 +124,33 @@ export default function SurveyPage({
     setError(null);
 
     try {
-      const submissionAnswers = survey.questions.map((q) => {
-        const answer: any = { question_id: q.id };
+      const submissionAnswers: SubmitSurveyInput['answers'] = survey.questions.flatMap((q) => {
+        const value = answers[q.id];
+        if (value === undefined || String(value).trim() === '') return [];
+        const answer: SubmitSurveyInput['answers'][number] = { question_id: q.id };
 
         if (q.kind === 'rating') {
-          answer.rating = parseInt(answers[q.id] as string);
+          answer.rating = Number(value);
         } else if (q.kind === 'single_choice') {
-          answer.option_id = answers[q.id];
+          answer.option_id = String(value);
         } else if (q.kind === 'text') {
-          answer.text_value = answers[q.id];
+          answer.text_value = String(value);
         }
 
-        return answer;
+        return [answer];
       });
+
+      if (submissionAnswers.length === 0) {
+        setError('Responda pelo menos uma pergunta antes de enviar.');
+        return;
+      }
 
       const response = await fetch(
         `/api/surveys/${survey.id}/submit`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers: submissionAnswers }),
+          body: JSON.stringify({ answers: submissionAnswers, challenge_token: challengeToken }),
         }
       );
 
@@ -110,6 +166,8 @@ export default function SurveyPage({
       setError(err instanceof Error ? err.message : 'Erro ao enviar.');
       console.error(err);
     } finally {
+      setChallengeToken(null);
+      if (challengeId.current) window.turnstile?.reset(challengeId.current);
       setSubmitting(false);
     }
   }
@@ -135,12 +193,12 @@ export default function SurveyPage({
           <p className="text-gray-600 mb-6">
             {error || 'A pesquisa que você está procurando não existe ou não está mais disponível.'}
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
           >
             Voltar ao início
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -174,12 +232,12 @@ export default function SurveyPage({
             Sua resposta foi registrada com sucesso. Seus comentários são
             muito importantes para nós.
           </p>
-          <a
+          <Link
             href="/"
             className="inline-block px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
           >
             Voltar
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -283,6 +341,15 @@ export default function SurveyPage({
             </div>
           ))}
 
+          <Script
+            src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+            onReady={() => setScriptReady(true)}
+            onError={() => setError('Não foi possível carregar a verificação de segurança. Recarregue a página.')}
+          />
+          <div ref={challengeContainer} />
+          {!survey.turnstile_site_key && (
+            <p className="text-red-700" role="alert">Verificação de segurança não configurada. Tente novamente mais tarde.</p>
+          )}
           <button
             type="submit"
             disabled={submitting}
