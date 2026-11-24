@@ -8,20 +8,20 @@ A API usa o cliente Supabase no servidor com a sessão do usuário e as polític
 2. Vincule a CLI ao projeto correto e confira as migrações:
 
    ```bash
-   npx supabase link
-   npx supabase migration list --remote
-   npx supabase db push --remote --dry-run
+   npx --yes supabase link
+   npx --yes supabase migration list --remote
+   npx --yes supabase db push --remote --dry-run
    ```
 
 3. Após confirmar o projeto e revisar a prévia, aplique as migrações:
 
    ```bash
-   npx supabase db push --remote
+   npx --yes supabase db push --remote
    ```
 
 4. Execute `npm run dev`, entre com uma conta, crie e ative uma pesquisa, responda pelo link público e confira os resultados. Verifique também o isolamento entre duas contas.
 
-As migrações em `supabase/migrations/` precisam estar aplicadas **antes** de usar a API. Os dados armazenados anteriormente em memória não são migrados e não persistem após reinicialização.
+As migrações em `supabase/migrations/` precisam estar aplicadas **antes** de usar a API. Dados fictícios de demonstração e capturas de tela não são importados para o banco. Se já houver dados reais no projeto Supabase, faça backup antes de aplicar novas migrações.
 
 ## Atualização automática do painel
 

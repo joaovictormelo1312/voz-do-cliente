@@ -1,10 +1,10 @@
-# 📚 Backend API Documentation
+# Referência da API
 
 ## Overview
 
-Este é um backend Next.js com API REST completa para o sistema "Voz do Cliente". Inclui autenticação, CRUD de pesquisas, questões, e submissão de respostas.
+Esta API faz parte da aplicação Next.js "Voz do Cliente". Inclui operações autenticadas de pesquisas e resultados, consulta pública de pesquisas e envio público verificado.
 
-**Base URL:** `http://localhost:3000/api`
+**Base URL local:** `http://localhost:3000/api`
 
 ---
 
@@ -17,6 +17,8 @@ Endpoints protegidos usam o cookie de sessão Supabase obtido no login da aplica
 Alguns endpoints são públicos (como responder pesquisa):
 - `POST /surveys/[id]/submit` - Enviar respostas (público)
 - `GET /surveys/by-slug/[slug]` - Obter pesquisa por slug (apenas ativa)
+
+O fluxo de atualização em tempo real não é público: `GET /surveys/events` exige uma sessão autenticada.
 
 ---
 
@@ -472,6 +474,37 @@ The `completion_rate` field is `null`: survey starts and abandonments are not tr
     ]
   }
 }
+```
+
+---
+
+### DASHBOARD EVENTS (SERVER-SENT EVENTS)
+
+#### GET /surveys/events
+Open an authenticated streaming connection for dashboard updates.
+
+**Authentication:** Required — Supabase session cookie.
+
+The server subscribes to new submissions for surveys owned by the signed-in user and sends only the affected survey ID to the browser. The access token stays on the server. The browser refreshes the corresponding results; no response content is sent in the event.
+
+**Events:**
+
+| Event | Data | Meaning |
+|---|---|---|
+| `ready` | `"ok"` | Subscription is ready; the dashboard synchronizes its data. |
+| `submission` | JSON string containing a survey UUID | A submission was recorded for that survey. |
+| `renew` | `"ok"` | Stream lifetime ended; the client reconnects. |
+| `failure` | Error message | Subscription failed; the client synchronizes and retries. |
+
+The connection sends heartbeat comments, pauses when the browser tab is hidden, and is renewed after a bounded lifetime. Hosting and proxies must support streaming and must not buffer the response.
+
+**Example:**
+```javascript
+const events = new EventSource("/api/surveys/events");
+events.addEventListener("submission", (event) => {
+  const surveyId = JSON.parse(event.data);
+  // Refresh results for surveyId.
+});
 ```
 
 ---

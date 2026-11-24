@@ -42,11 +42,11 @@ Não compartilhe `.env.local` nem as chaves secretas. A chave secreta do Supabas
 
 - [Integração com Supabase e proteção dos envios](docs/SUPABASE_INTEGRATION.md).
 - [Referência da API](docs/API_DOCUMENTATION.md).
-- [Índice dos demais documentos](docs/ÍNDICE.md). Alguns documentos descrevem propostas ou estados anteriores do projeto; confira suas datas e limitações.
+- [Índice dos demais documentos](docs/ÍNDICE.md), incluindo guias técnicos e documentos acadêmicos que distinguem requisitos propostos das funcionalidades implementadas.
 
 ## Telas da aplicação
 
-As capturas refletem a interface atual, com tema escuro e detalhes em verde-limão. As telas autenticadas e o formulário público usam dados fictícios de demonstração.
+As capturas refletem a interface atual, com tema escuro e detalhes em verde-limão; os dados mostrados nas imagens são fictícios. A aplicação em execução carrega pesquisas e resultados do Supabase. O formulário público também consulta uma pesquisa real e exige Turnstile para aceitar envios.
 
 ### Login
 

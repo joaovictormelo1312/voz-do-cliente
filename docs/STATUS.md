@@ -1,168 +1,32 @@
-# 🏁 STATUS FINAL - Voz do Cliente
+# Status do projeto
 
-## ✅ BACKEND 100% COMPLETO
+**Atualizado em:** 24 de novembro de 2026
 
-```
-PROJECT STATUS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+## Implementado
 
-BACKEND:
-  ✅ Database layer (20 funções)
-  ✅ 15 API endpoints
-  ✅ Validação com Zod
-  ✅ Autenticação/Autorização
-  ✅ Public survey page
-  ✅ Build sem erros
-  ✅ TypeScript type-safe
+- Aplicação Next.js com páginas de cadastro, login, recuperação de senha, painel e formulário público.
+- Supabase Auth e PostgreSQL com migrações e políticas RLS.
+- Gestão de pesquisas e perguntas via API autenticada.
+- Envio público com desafio Turnstile validado no servidor e gravação transacional.
+- Resultados por pesquisa e indicadores do painel derivados das respostas reais.
+- Atualizações automáticas pelo Supabase Realtime via rota SSE autenticada.
+- Testes automatizados executados por `npm test`.
 
-API ROUTES (11 arquivos):
-  ✅ GET/POST    /api/surveys
-  ✅ GET/PATCH/DELETE /api/surveys/[id]
-  ✅ GET/POST    /api/surveys/[id]/questions
-  ✅ PATCH/DELETE    /api/surveys/[id]/questions/[qid]
-  ✅ POST        /api/surveys/[id]/questions/[qid]/options
-  ✅ PATCH/DELETE    /api/surveys/[id]/questions/[qid]/options/[oid]
-  ✅ POST        /api/surveys/[id]/submit (público)
-  ✅ GET         /api/surveys/[id]/results
-  ✅ GET         /api/surveys/by-slug/[slug] (público)
+## Ainda não implementado ou limitado
 
-UI:
-  ✅ /pesquisa/[slug] - Página responsiva (pública)
-  ✓ Suporta 3 tipos de pergunta (rating, single_choice, text)
-  ✓ Validação de campos obrigatórios
-  ✓ Envio de respostas funcionando
+- Taxa de conclusão: não há coleta de início/abandono.
+- Análise de sentimento ou classificação de comentários: inexistente.
+- Filtro por período nos relatórios e exportação estruturada: inexistentes.
+- Papéis de usuário e isolamento multiempresa: inexistentes.
+- Configurações de notificações e privacidade: demonstrativas.
+- Controles contra tráfego volumétrico: dependem da infraestrutura; Turnstile não é suficiente por si só.
 
-DOCUMENTAÇÃO (8 arquivos):
-  ✅ RESUMO_RÁPIDO.md
-  ✅ BACKEND_INDEX.md
-  ✅ README_BACKEND.md
-  ✅ API_DOCUMENTATION.md
-  ✅ BACKEND_COMPLETO.md
-  ✅ SUPABASE_INTEGRATION.md
-  ✅ GUIA_PRODUCAO.md
-  ✅ CONCLUSÃO.md
+## Comandos
 
-BUILD:
-  ✅ Compilation: 737ms
-  ✅ TypeScript: 2.0s
-  ✅ Total: ~3.7s
-  ✅ Next.js: v16.4.5
-  ✅ Turbopack enabled
-  ✅ Zero errors
+```bash
+npm test
+npm run lint
+npm run build
 ```
 
----
-
-## 🚀 Pronto Para:
-
-```
-┌─ DESENVOLVIMENTO
-│  ✅ npm run dev
-│  ✅ http://localhost:3000
-│  ✅ Hot reload ativado
-│
-├─ PRODUÇÃO
-│  ✅ npm run build
-│  ✅ npm run start
-│  ✅ Ready to deploy
-│
-└─ SUPABASE
-   🔄 Próximo passo
-   ⏱️  ~1 hora de integração
-   📄 Seguir: SUPABASE_INTEGRATION.md
-```
-
----
-
-## 📊 Resumo de Arquivos
-
-```
-Backend Code:          3 arquivos (types, validation, database)
-API Endpoints:        11 arquivos (15 rotas)
-UI Pages:             1 arquivo (pesquisa public)
-Documentation:        8 arquivos (guias completos)
-Database:        In-Memory (ready for Supabase)
-
-TOTAL:               23 arquivos novos/atualizados
-                     ~5200 linhas de código
-```
-
----
-
-## 🎯 Próximos Passos
-
-```
-HOJE:
-  1. Ler RESUMO_RÁPIDO.md
-  2. Revisar BACKEND_INDEX.md
-  
-AMANHÃ:
-  1. Seguir SUPABASE_INTEGRATION.md
-  2. Atualizar database.ts
-  3. Testar endpoints com Supabase
-  
-PRÓXIMA SEMANA:
-  1. Conectar Frontend
-  2. Deploy para staging
-  3. Deploy para produção
-```
-
----
-
-## 📈 Commits
-
-```
-✅ feat: Complete backend implementation with 15 API endpoints
-✅ docs: Add final summary and conclusion
-```
-
----
-
-## 🎓 Arquitetura Pronta
-
-```
-Request → Auth → Validation (Zod) → Database Layer → Response
-                                           ↓
-                                      In-Memory (agora)
-                                      Supabase (depois)
-```
-
----
-
-## ⚡ Build Output
-
-```
-▲ Next.js 16.4.5 (Turbopack)
-✓ Compiled successfully in 737ms
-✓ TypeScript check: 2.0s
-✓ Static pages: 11/11
-✓ Zero errors
-
-Route Summary:
-  ○ Static:        3 páginas
-  ◐ Partial:       3 páginas  
-  ƒ Dynamic:      11 endpoints
-
-Ready to deploy!
-```
-
----
-
-## 🏆 Conclusão
-
-**🎉 Backend 100% Completo**
-
-- Arquitetura limpa e desacoplada
-- Código type-safe em TypeScript
-- Documentação abrangente
-- Build sem erros
-- Pronto para Supabase
-- Pronto para produção
-
----
-
-**Status:** ✅ **COMPLETO**  
-**Próximo:** 🔄 Integração Supabase  
-**Timeline:** ⏱️  ~1 hora
-
-🚀 **Backend terminado. Aguardando próxima etapa!**
+Consulte [README.md](../README.md) para executar localmente, [SUPABASE_INTEGRATION.md](./SUPABASE_INTEGRATION.md) para preparar o banco e [GUIA_PRODUCAO.md](./GUIA_PRODUCAO.md) para publicar.

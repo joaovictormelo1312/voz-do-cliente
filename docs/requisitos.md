@@ -8,6 +8,8 @@ O sistema permitirá que uma organização crie e disponibilize pesquisas de sat
 
 **Nome provisório:** Sistema de Pesquisa de Satisfação e Experiência do Cliente.
 
+> **Escopo do documento:** os requisitos a seguir descrevem objetivos do projeto, não uma afirmação de que todos já foram implementados. A tabela de situação abaixo separa o que existe hoje das evoluções ainda pendentes.
+
 ### Problema
 
 Organizações podem ter dificuldade para coletar, organizar e analisar opiniões de clientes de forma centralizada. Quando as respostas são registradas manualmente ou em ferramentas dispersas, torna-se mais difícil identificar padrões, acompanhar indicadores e tomar decisões com base no feedback recebido.
@@ -53,6 +55,19 @@ Desenvolver um sistema web que permita criar pesquisas de satisfação, coletar 
 | RF14 | O sistema deve permitir encerrar ou desativar uma pesquisa para impedir novas respostas. |
 
 > Caso o escopo seja menor, priorize RF01 a RF10 e deixe exportação e filtros avançados para trabalhos futuros.
+
+### Situação na aplicação atual
+
+| Requisito | Situação atual |
+|---|---|
+| RF01, RF05, RF06, RF07, RF08, RF13 e RF14 | Implementados: sessão administrativa, formulário público, validação e persistência de envios, consulta e encerramento de pesquisas. |
+| RF02 | Implementado com limites: criação, ativação, encerramento e edição conforme o estado e as respostas recebidas. |
+| RF03 e RF04 | Parcial: pesquisas novas usam nota obrigatória de 1 a 5 e comentário opcional. Tipos legados são mantidos; não há editor livre de estrutura nos formulários padrão. |
+| RF09 e RF10 | Implementados: resultados por pergunta e leitura de comentários estão disponíveis ao proprietário autenticado. |
+| RF11 | Parcial: é possível filtrar respostas por pesquisa; relatórios não filtram por período. |
+| RF12 | Parcial: é possível imprimir pelo navegador; não há exportação estruturada. |
+
+O painel usa dados persistidos no Supabase, mas recursos de análise automática, filtros temporais e exportação não devem ser considerados implementados.
 
 ## 4. Requisitos não funcionais
 

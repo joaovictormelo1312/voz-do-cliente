@@ -1,8 +1,25 @@
-# Stack Tecnológica
+# Stack tecnológica
 
 ## 1. Visão geral
 
-A aplicação será desenvolvida como um sistema web para criação de pesquisas de satisfação, coleta de respostas e análise da experiência do cliente. A stack proposta prioriza tecnologias atuais, integração entre os componentes e um escopo viável para desenvolvimento acadêmico.
+A aplicação é um sistema web para criação de pesquisas de satisfação, coleta de respostas e análise da experiência do cliente. Este documento distingue as tecnologias usadas no repositório das opções propostas para o trabalho acadêmico.
+
+## Stack implementada
+
+| Camada | Tecnologia atual | Evidência/observação |
+|---|---|---|
+| Aplicação web | Next.js 16.4.5, React 19.3.0 e TypeScript | Dependências em `package.json`; páginas e Route Handlers no App Router. |
+| Estilização | Tailwind CSS 4 | Configuração do projeto e pipeline do Next.js. |
+| Backend e autenticação | Route Handlers Next.js, `@supabase/ssr` e Supabase Auth | Sessão verificada no servidor por cookie. |
+| Persistência | Supabase PostgreSQL com RLS e migrations SQL | Esquema e políticas em `supabase/migrations/`. |
+| Validação | Zod 4 | Schemas de entradas da API e validações server-side. |
+| Gráficos | Recharts 3 | Gráficos do painel e relatórios. |
+| Testes automatizados | Runner nativo do Node.js | O script `npm test` executa `node --test` nos arquivos de `tests/`. |
+| Testes de navegador | Playwright está instalado como dependência | Não há script de testes E2E no `package.json` atualmente. |
+| Empacotamento | Next.js standalone e Docker Compose | Há configurações de desenvolvimento e produção no repositório. |
+| Hospedagem | Não definida neste repositório | A hospedagem escolhida precisa suportar Next.js e streaming SSE para as atualizações do painel. |
+
+`shadcn/ui`, Vitest e Vercel aparecem como opções de planejamento abaixo; não são a implementação ou uma decisão de hospedagem confirmada.
 
 ## 2. Tecnologias propostas
 
@@ -81,4 +98,4 @@ Envio automático por e-mail, integração com sistemas externos, análise autom
 
 ## 7. Texto para inclusão no trabalho acadêmico
 
-> O sistema será desenvolvido utilizando Next.js, React e TypeScript para a construção da aplicação web. A interface será estilizada com Tailwind CSS e utilizará componentes do shadcn/ui. Os dados serão armazenados em um banco de dados PostgreSQL disponibilizado pelo Supabase, que também será utilizado para autenticação dos usuários administrativos. A validação dos dados será realizada com Zod, e a apresentação dos indicadores será implementada com a biblioteca Recharts. Para a verificação da aplicação, serão utilizados Vitest em testes unitários e Playwright em testes dos principais fluxos pelo navegador. A aplicação poderá ser hospedada na Vercel, com o banco de dados e os serviços de autenticação hospedados no Supabase.
+> A aplicação implementada utiliza Next.js, React e TypeScript para páginas, componentes e operações de servidor. A interface é estilizada com Tailwind CSS e os indicadores usam Recharts. O Supabase fornece autenticação e PostgreSQL, com validação Zod no servidor. Os testes automatizados atuais usam o runner nativo do Node.js. O repositório também inclui configuração Docker; o provedor de hospedagem ainda deve ser escolhido e precisa suportar as conexões SSE do painel.

@@ -4,7 +4,7 @@
 
 Este documento apresenta a arquitetura proposta para o **Sistema Web para Pesquisa de Satisfação e Análise da Experiência do Cliente**. A arquitetura está alinhada aos requisitos descritos em `requisitos.md` e às tecnologias propostas em `stack.md`.
 
-> **Situação atual:** a aplicação contém uma interface com dados mock e estado local. Autenticação, coleta pública, persistência e agregações sobre respostas reais ainda não estão implementadas. Para o fluxo revisado, limitações, regras de cálculo e decisões pendentes, consulte [fluxo-dados.md](./fluxo-dados.md). Os diagramas e componentes a seguir descrevem a arquitetura proposta.
+> **Situação atual:** autenticação, API, formulário público, persistência Supabase/PostgreSQL e indicadores sobre respostas registradas estão implementados. O painel atualiza resultados por Supabase Realtime encaminhado via SSE. Dados fictícios existem para demonstração e em capturas de tela; não são a fonte do painel conectado ao banco. As seções e diagramas abaixo descrevem a arquitetura conceitual e podem incluir evoluções ainda não implementadas. Para o comportamento atual, consulte [fluxo-dados.md](./fluxo-dados.md) e [BACKEND_STATUS.md](./BACKEND_STATUS.md).
 
 ## 2. Estilo arquitetural
 
@@ -151,7 +151,7 @@ No escopo anônimo, o envio não precisa armazenar nome, e-mail ou outro identif
 
 ## 7. Fluxos arquiteturais principais
 
-Os fluxos desta seção são propostos. A análise detalhada das entradas, alterações, validações, falhas, indicadores e critérios de aceitação está em [fluxo-dados.md](./fluxo-dados.md). A preservação das versões de perguntas publicadas é uma proposta a decidir antes da implementação.
+Os passos representam o fluxo implementado em alto nível. A análise detalhada das entradas, alterações, validações, falhas e indicadores está em [fluxo-dados.md](./fluxo-dados.md). O sistema permite criar uma nova versão como pesquisa separada; o original e suas respostas são preservados.
 
 ### 7.1 Criação e publicação de pesquisa
 
@@ -199,7 +199,7 @@ O registro do envio e de suas respostas deve ser atômico: se uma parte falhar, 
 ```mermaid
 flowchart LR
     User[Usuário]
-    Hosting[Hospedagem da aplicação<br/>Vercel]
+    Hosting[Hospedagem compatível com Next.js<br/>e respostas HTTP em streaming]
     Supabase[Supabase<br/>Auth e PostgreSQL]
     User --> Hosting
     Hosting --> Supabase
@@ -208,7 +208,7 @@ flowchart LR
 Ambientes recomendados:
 
 - **Desenvolvimento:** execução local da aplicação e uso de projeto ou ambiente separado para testes.
-- **Produção/demonstração:** aplicação publicada na Vercel conectada ao projeto Supabase correspondente.
+- **Produção/demonstração:** aplicação publicada em hospedagem compatível com a saída standalone do Next.js e conexões SSE, conectada ao projeto Supabase correspondente. O repositório também contém Docker Compose de produção.
 
 As configurações de cada ambiente devem ser separadas. Migrações e alterações do esquema devem ser registradas e aplicadas de forma controlada. Dados reais de clientes não devem ser usados em testes sem autorização e medidas apropriadas de proteção.
 
